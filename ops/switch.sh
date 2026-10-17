@@ -42,4 +42,25 @@ occ maintenance:mode --off
 occ upgrade --no-interaction || true
 occ app:enable plainshow
 occ maintenance:repair --no-interaction | tail -3
+
+step "PlainShow's name, colour and logos (the phone and desktop apps show them)"
+occ theming:config name "PlainShow Cloud"
+occ theming:config url "https://plainshow.se"
+occ theming:config slogan "Your files, photos and calendar"
+occ theming:config primary_color "#FC5000"
+occ theming:config background backgroundColor
+occ theming:config background_color "#151515"
+occ theming:config logo "$DIR/apps/plainshow/img/plainshow-icon.png"
+occ theming:config logoheader "$DIR/apps/plainshow/img/plainshow-logo.png"
+occ theming:config favicon "$DIR/apps/plainshow/img/plainshow-icon.png"
+
+step "Signing in is PlainShow's: Nextcloud passwords stop working, device passwords stay"
+occ config:app:set user_oidc allow_multiple_user_backends --value=0
+occ config:system:set token_auth_enforced --value=true --type=boolean
+for user in $(occ user:list --output=json | python3 -c "import json,sys;print(' '.join(json.load(sys.stdin)))"); do
+    OC_PASS=$(openssl rand -base64 48) sudo -E -u www-data php occ user:resetpassword --password-from-env "$user" >/dev/null
+done
+echo "Every Nextcloud password replaced with a random one."
+# Device passwords of the Talk app are of no use without Talk.
+sudo mariadb "$(occ config:system:get dbname)" -e "DELETE FROM $(occ config:system:get dbtableprefix)authtoken WHERE name LIKE '%Nextcloud Talk%' OR name LIKE '%Nextcloud-Talk%'"
 occ status
