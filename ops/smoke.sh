@@ -55,7 +55,7 @@ check "the other person sees it" 200 -u "$B" -H "OCS-APIREQUEST: true" "$H/ocs/v
 check "people search" 200 -u "$A" -H "OCS-APIREQUEST: true" "$H/ocs/v2.php/apps/files_sharing/api/v1/sharees?search=$USER2&itemType=file"
 link=$(ocs -u "$A" -X POST "$H/ocs/v2.php/apps/files_sharing/api/v1/shares?format=json" -d "path=/plainshow-smoke/a.txt&shareType=3&permissions=1" | python3 -c "import json,sys;print(json.load(sys.stdin)['ocs']['data']['token'])" 2>/dev/null)
 check "public link page" 200 "$H/index.php/s/$link"
-check "public link download" 200 "$H/index.php/s/$link/download"
+check "public link download" 200 -L "$H/index.php/s/$link/download"
 check "public dav download" 200 -u "$link:" "$H/public.php/webdav/"
 check "public dav (new)" 200 "$H/public.php/dav/files/$link/"
 check "unshare" 200 -u "$A" -H "OCS-APIREQUEST: true" -X DELETE "$H/ocs/v2.php/apps/files_sharing/api/v1/shares/$share"
