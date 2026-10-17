@@ -16,7 +16,6 @@ use OC\Files\Node\NonExistingFolder;
 use OC\Files\View;
 use OC\User\NoUserException;
 use OC_User;
-use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\Files_Trashbin\Command\Expire;
 use OCA\Files_Trashbin\Events\BeforeNodeRestoredEvent;
 use OCA\Files_Trashbin\Events\NodeRestoredEvent;
@@ -1278,26 +1277,8 @@ class Trashbin implements IEventListener {
 		}
 	}
 
-	/**
-	 * in case the request is authed, and user token is from a federated share
-	 * we use shared_with as initiator of the deletion
-	 */
+	/** Who deleted it: there are no federated shares, so always the user. */
 	private static function overwriteDeletedBy(string $user) {
-		try {
-			$request = Server::get(IRequest::class);
-			/** @psalm-suppress NoInterfaceProperties */
-			$token = $request->server['PHP_AUTH_USER'] ?? '';
-			if ($token === '') {
-				return $user;
-			}
-
-			$federatedShareProvider = Server::get(FederatedShareProvider::class);
-			$share = $federatedShareProvider->getShareByToken($token);
-
-			return $share->getSharedWith();
-		} catch (NotFoundExceptionInterface|ContainerExceptionInterface|ShareNotFound) {
-		}
-
 		return $user;
 	}
 

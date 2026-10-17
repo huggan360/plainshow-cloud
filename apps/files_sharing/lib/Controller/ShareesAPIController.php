@@ -11,7 +11,6 @@ namespace OCA\Files_Sharing\Controller;
 use Generator;
 use OC\Collaboration\Collaborators\SearchResult;
 use OC\Share\Share;
-use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\Files_Sharing\ResponseDefinitions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
@@ -73,7 +72,6 @@ class ShareesAPIController extends OCSController {
 		protected IURLGenerator $urlGenerator,
 		protected IManager $shareManager,
 		protected ISearch $collaboratorSearch,
-		protected FederatedShareProvider $federatedShareProvider,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -146,10 +144,6 @@ class ShareesAPIController extends OCSController {
 		} elseif ($itemType === 'teams') {
 			if ($this->shareManager->allowGroupSharing()) {
 				$shareTypes[] = IShare::TYPE_GROUP;
-			}
-
-			if ($this->federatedShareProvider->isOutgoingServer2serverShareEnabled()) {
-				$shareTypes[] = IShare::TYPE_REMOTE;
 			}
 
 			$shareTypes[] = IShare::TYPE_EMAIL;
@@ -354,11 +348,11 @@ class ShareesAPIController extends OCSController {
 	 * @return bool
 	 */
 	protected function isRemoteSharingAllowed(): bool {
-		return $this->federatedShareProvider->isOutgoingServer2serverShareEnabled();
+		return false; // No federation in PlainShow Cloud.
 	}
 
 	protected function isRemoteGroupSharingAllowed(): bool {
-		return $this->federatedShareProvider->isOutgoingServer2serverGroupShareEnabled();
+		return false;
 	}
 
 

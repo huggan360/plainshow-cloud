@@ -152,7 +152,6 @@ class ComposerStaticInitDAV
         'OCA\\DAV\\CalDAV\\Security\\RateLimitingPlugin' => __DIR__ . '/..' . '/../lib/CalDAV/Security/RateLimitingPlugin.php',
         'OCA\\DAV\\CalDAV\\Sharing\\Backend' => __DIR__ . '/..' . '/../lib/CalDAV/Sharing/Backend.php',
         'OCA\\DAV\\CalDAV\\Sharing\\Service' => __DIR__ . '/..' . '/../lib/CalDAV/Sharing/Service.php',
-        'OCA\\DAV\\CalDAV\\Status\\StatusService' => __DIR__ . '/..' . '/../lib/CalDAV/Status/StatusService.php',
         'OCA\\DAV\\CalDAV\\SyncService' => __DIR__ . '/..' . '/../lib/CalDAV/SyncService.php',
         'OCA\\DAV\\CalDAV\\SyncServiceResult' => __DIR__ . '/..' . '/../lib/CalDAV/SyncServiceResult.php',
         'OCA\\DAV\\CalDAV\\TimeZoneFactory' => __DIR__ . '/..' . '/../lib/CalDAV/TimeZoneFactory.php',

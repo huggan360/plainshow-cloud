@@ -8,13 +8,11 @@ declare(strict_types=1);
 
 namespace OCA\Files_Sharing;
 
-use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\Files_Sharing\AppInfo\Application;
 use OCA\Files_Sharing\Event\BeforeTemplateRenderedEvent;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
-use OCP\AppFramework\Http\Template\ExternalShareMenuAction;
 use OCP\AppFramework\Http\Template\LinkMenuAction;
 use OCP\AppFramework\Http\Template\PublicTemplateResponse;
 use OCP\AppFramework\Http\Template\SimpleMenuAction;
@@ -43,7 +41,6 @@ class DefaultPublicShareTemplateProvider implements IPublicShareTemplateProvider
 		private IUserManager $userManager,
 		private IAccountManager $accountManager,
 		private IPreview $previewManager,
-		protected FederatedShareProvider $federatedShareProvider,
 		private IUrlGenerator $urlGenerator,
 		private IEventDispatcher $eventDispatcher,
 		private IL10N $l10n,
@@ -162,17 +159,6 @@ class DefaultPublicShareTemplateProvider implements IPublicShareTemplateProvider
 			// If not a file drop, then add the download header action
 			$headerActions[] = new SimpleMenuAction('download', $this->l10n->t('Download'), 'icon-download', $downloadUrl, 0, (string)$shareNode->getSize());
 
-			// If remote sharing is enabled also add the remote share action to the menu
-			if ($this->federatedShareProvider->isOutgoingServer2serverShareEnabled()) {
-				$headerActions[] = new ExternalShareMenuAction(
-					// TRANSLATORS The placeholder refers to the software product name as in 'Add to your Nextcloud'
-					$this->l10n->t('Add to your %s', [$this->defaults->getProductName()]),
-					'icon-external',
-					$ownerId,
-					$ownerName,
-					$shareNode->getName(),
-				);
-			}
 		}
 
 		$shareUrl = $this->urlGenerator->linkToRouteAbsolute('files_sharing.sharecontroller.showShare', ['token' => $token]);

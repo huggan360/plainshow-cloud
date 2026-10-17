@@ -13,7 +13,6 @@ use OCA\DAV\Connector\Sabre\ServerFactory;
 use OCA\DAV\Files\Sharing\FilesDropPlugin;
 use OCA\DAV\Files\Sharing\PublicLinkCheckPlugin;
 use OCA\DAV\Storage\PublicOwnerWrapper;
-use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCP\App\IAppManager;
 use OCP\BeforeSabrePubliclyLoadedEvent;
 use OCP\Constants;
@@ -83,14 +82,6 @@ $server = $serverFactory->createServer(
 		$linkCheckPlugin,
 		$filesDropPlugin
 	) {
-		$isAjax = in_array('XMLHttpRequest', explode(',', $_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
-		/** @var FederatedShareProvider $shareProvider */
-		$federatedShareProvider = Server::get(FederatedShareProvider::class);
-		if ($federatedShareProvider->isOutgoingServer2serverShareEnabled() === false && !$isAjax) {
-			// this is what is thrown when trying to access a non-existing share
-			throw new \Sabre\DAV\Exception\NotAuthenticated();
-		}
-
 		$share = $authBackend->getShare();
 		$isReadable = $share->getPermissions() & Constants::PERMISSION_READ;
 		$fileId = $share->getNodeId();

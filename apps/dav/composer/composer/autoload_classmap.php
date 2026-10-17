@@ -137,7 +137,6 @@ return array(
     'OCA\\DAV\\CalDAV\\Security\\RateLimitingPlugin' => $baseDir . '/../lib/CalDAV/Security/RateLimitingPlugin.php',
     'OCA\\DAV\\CalDAV\\Sharing\\Backend' => $baseDir . '/../lib/CalDAV/Sharing/Backend.php',
     'OCA\\DAV\\CalDAV\\Sharing\\Service' => $baseDir . '/../lib/CalDAV/Sharing/Service.php',
-    'OCA\\DAV\\CalDAV\\Status\\StatusService' => $baseDir . '/../lib/CalDAV/Status/StatusService.php',
     'OCA\\DAV\\CalDAV\\SyncService' => $baseDir . '/../lib/CalDAV/SyncService.php',
     'OCA\\DAV\\CalDAV\\SyncServiceResult' => $baseDir . '/../lib/CalDAV/SyncServiceResult.php',
     'OCA\\DAV\\CalDAV\\TimeZoneFactory' => $baseDir . '/../lib/CalDAV/TimeZoneFactory.php',

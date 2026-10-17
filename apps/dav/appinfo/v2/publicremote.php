@@ -17,7 +17,6 @@ use OCA\DAV\Storage\PublicOwnerWrapper;
 use OCA\DAV\Storage\PublicShareWrapper;
 use OCA\DAV\Upload\ChunkingPlugin;
 use OCA\DAV\Upload\ChunkingV2Plugin;
-use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCP\App\IAppManager;
 use OCP\BeforeSabrePubliclyLoadedEvent;
 use OCP\Constants;
@@ -89,17 +88,6 @@ $filesDropPlugin = new FilesDropPlugin();
 
 /** @var string $baseuri defined in public.php */
 $server = $serverFactory->createServer(true, $baseuri, $requestUri, $authPlugin, function (\Sabre\DAV\Server $server) use ($baseuri, $requestUri, $authBackend, $linkCheckPlugin, $filesDropPlugin) {
-	// GET must be allowed for e.g. showing images and allowing Zip downloads
-	if ($server->httpRequest->getMethod() !== 'GET') {
-		// If this is *not* a GET request we only allow access to public DAV from AJAX or when Server2Server is allowed
-		$isAjax = in_array('XMLHttpRequest', explode(',', $_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
-		$federatedShareProvider = Server::get(FederatedShareProvider::class);
-		if ($federatedShareProvider->isOutgoingServer2serverShareEnabled() === false && $isAjax === false) {
-			// this is what is thrown when trying to access a non-existing share
-			throw new NotAuthenticated();
-		}
-	}
-
 	$share = $authBackend->getShare();
 	$isReadable = $share->getPermissions() & Constants::PERMISSION_READ;
 	$fileId = $share->getNodeId();

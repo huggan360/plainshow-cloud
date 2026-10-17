@@ -11,14 +11,11 @@ use OCA\DAV\Connector\Sabre\Principal;
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
 use OCA\Files\Event\LoadSidebar;
 use OCA\Files_Versions\Capabilities;
-use OCA\Files_Versions\Events\CreateVersionEvent;
 use OCA\Files_Versions\Events\VersionRestoredEvent;
-use OCA\Files_Versions\Listener\CreateVersionListenerForWorkflow;
 use OCA\Files_Versions\Listener\FileEventsListener;
 use OCA\Files_Versions\Listener\LegacyRollbackListener;
 use OCA\Files_Versions\Listener\LoadAdditionalListener;
 use OCA\Files_Versions\Listener\LoadSidebarListener;
-use OCA\Files_Versions\Listener\RegisterWorkflowIntegrationListener;
 use OCA\Files_Versions\Listener\VersionAuthorListener;
 use OCA\Files_Versions\Listener\VersionStorageMoveListener;
 use OCA\Files_Versions\Versions\IVersionManager;
@@ -39,8 +36,6 @@ use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\Files\Events\Node\NodeRenamedEvent;
 use OCP\Files\Events\Node\NodeTouchedEvent;
 use OCP\Files\Events\Node\NodeWrittenEvent;
-use OCP\WorkflowEngine\Events\LoadSettingsScriptsEvent;
-use OCP\WorkflowEngine\Events\RegisterOperationsEvent;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -92,10 +87,6 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(NodeWrittenEvent::class, VersionAuthorListener::class, -1);
 		$context->registerEventListener(VersionRestoredEvent::class, LegacyRollbackListener::class);
 
-		// WFE integration
-		$context->registerEventListener(RegisterOperationsEvent::class, RegisterWorkflowIntegrationListener::class);
-		$context->registerEventListener(LoadSettingsScriptsEvent::class, RegisterWorkflowIntegrationListener::class);
-		$context->registerEventListener(CreateVersionEvent::class, CreateVersionListenerForWorkflow::class);
 	}
 
 	#[\Override]

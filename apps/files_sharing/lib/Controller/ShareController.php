@@ -9,7 +9,6 @@ namespace OCA\Files_Sharing\Controller;
 
 use OC\ServerNotAvailableException;
 use OCA\DAV\Connector\Sabre\PublicAuth;
-use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\Files_Sharing\Event\BeforeTemplateRenderedEvent;
 use OCA\Files_Sharing\Event\ShareLinkAccessedEvent;
 use OCP\Accounts\IAccountManager;
@@ -70,7 +69,6 @@ class ShareController extends AuthPublicShareController {
 		ISession $session,
 		protected IPreview $previewManager,
 		protected IRootFolder $rootFolder,
-		protected FederatedShareProvider $federatedShareProvider,
 		protected IAccountManager $accountManager,
 		protected IEventDispatcher $eventDispatcher,
 		protected IL10N $l10n,
