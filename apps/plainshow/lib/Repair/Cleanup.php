@@ -12,9 +12,8 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 
 /**
- * From Nextcloud to PlainShow Cloud: the removed apps' tables go, and inside
- * the tables that stay: the removed
- * apps' settings, migrations and background jobs go; Talk's chats and room
+ * From Nextcloud to PlainShow Cloud. The removed apps' tables go, and so do
+ * their settings, migrations and background jobs; Talk's chats and room
  * shares go with Talk; no two-factor provider is left switched on; the photo
  * albums become PlainShow's. Safe to run again.
  */
