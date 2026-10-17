@@ -76,7 +76,7 @@ check "trash list" 207 -u "$A" -X PROPFIND -H "Depth: 1" "$H/remote.php/dav/tras
 check "tags" 207 -u "$A" -X PROPFIND -H "Depth: 1" "$H/remote.php/dav/systemtags/"
 check "app sign-in, v2 (desktop)" 200 -X POST "$H/index.php/login/v2"
 check "app sign-in, v1 (phones)" 200 -H "OCS-APIREQUEST: true" "$H/index.php/login/flow"
-check "device password" 200 -u "$A" -H "OCS-APIREQUEST: true" "$H/ocs/v2.php/core/getapppassword"
+check "device password (403 when already using one)" "200 403" -u "$A" -H "OCS-APIREQUEST: true" "$H/ocs/v2.php/core/getapppassword"
 check "notifications" 200 -u "$A" -H "OCS-APIREQUEST: true" "$H/ocs/v2.php/apps/notifications/api/v2/notifications"
 
 check "clean up" 204 -u "$A" -X DELETE "$D"
