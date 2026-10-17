@@ -34,6 +34,9 @@ occ config:system:set integrity.check.disabled --value=true --type=boolean
 occ config:system:set upgrade.disable-web --value=true --type=boolean
 occ config:system:set has_internet_connection --value=true --type=boolean
 
+step "Clear PHP's caches (Nextcloud keeps its routes in APCu)"
+sudo systemctl reload apache2
+
 step "Maintenance mode off, upgrade, PlainShow app (runs the cleanup)"
 occ maintenance:mode --off
 occ upgrade --no-interaction || true
