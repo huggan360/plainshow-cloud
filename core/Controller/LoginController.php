@@ -29,6 +29,7 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\RedirectResponse;
+use OCP\AppFramework\Http\StandaloneTemplateResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -123,167 +124,19 @@ class LoginController extends Controller {
 			return new RedirectResponse($this->urlGenerator->linkToDefaultPageUrl());
 		}
 
-		$loginMessages = $this->session->get('loginMessages');
-		if (!$this->manager->isFairUseOfFreePushService()) {
-			if (!is_array($loginMessages)) {
-				$loginMessages = [[], []];
+		// PlainShow Cloud has no password form: signing in is PlainShow's,
+		// through the sign-in user_oidc registers.
+		foreach (OC_App::getAlternativeLogIns() as $login) {
+			$href = (string)($login['href'] ?? '');
+			if ($href === '') {
+				continue;
 			}
-			$loginMessages[1][] = $this->l10n->t('This community release of Nextcloud is unsupported and push notifications are limited.');
-		}
-		if (is_array($loginMessages)) {
-			[$errors, $messages] = $loginMessages;
-			$this->initialState->provideInitialState('loginMessages', $messages);
-			$this->initialState->provideInitialState('loginErrors', $errors);
-		}
-		$this->session->remove('loginMessages');
-
-		if ($user !== null && $user !== '') {
-			$this->initialState->provideInitialState('loginUsername', $user);
-		} else {
-			$this->initialState->provideInitialState('loginUsername', '');
-		}
-
-		$this->initialState->provideInitialState(
-			'loginAutocomplete',
-			$this->config->getSystemValue('login_form_autocomplete', true) === true
-		);
-
-		$this->initialState->provideInitialState(
-			'loginCanRememberme',
-			$this->config->getSystemValueInt('remember_login_cookie_lifetime', 60 * 60 * 24 * 15) > 0
-		);
-
-		if (!empty($redirect_url)) {
-			[$url, ] = explode('?', $redirect_url);
-			if ($url !== $this->urlGenerator->linkToRoute('core.login.logout')) {
-				$this->initialState->provideInitialState('loginRedirectUrl', $redirect_url);
+			if (!empty($redirect_url) && !str_contains($href, 'redirectUrl=')) {
+				$href .= (str_contains($href, '?') ? '&' : '?') . 'redirectUrl=' . urlencode($redirect_url);
 			}
+			return new RedirectResponse($href);
 		}
-
-		$this->initialState->provideInitialState(
-			'loginThrottleDelay',
-			$this->throttler->getDelay($this->request->getRemoteAddress())
-		);
-
-		$this->setPasswordResetInitialState($user);
-
-		$this->setEmailStates();
-
-		$this->initialState->provideInitialState('webauthn-available', $this->webAuthnManager->isWebAuthnAvailable());
-
-		$this->initialState->provideInitialState('hideLoginForm', $this->config->getSystemValueBool('hide_login_form', false));
-
-		// OpenGraph Support: http://ogp.me/
-		Util::addHeader('meta', ['property' => 'og:title', 'content' => Util::sanitizeHTML($this->defaults->getName())]);
-		Util::addHeader('meta', ['property' => 'og:description', 'content' => Util::sanitizeHTML($this->defaults->getSlogan())]);
-		Util::addHeader('meta', ['property' => 'og:site_name', 'content' => Util::sanitizeHTML($this->defaults->getName())]);
-		Util::addHeader('meta', ['property' => 'og:url', 'content' => $this->urlGenerator->getAbsoluteURL('/')]);
-		Util::addHeader('meta', ['property' => 'og:type', 'content' => 'website']);
-		Util::addHeader('meta', ['property' => 'og:image', 'content' => $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath('core', 'favicon-touch.png'))]);
-
-		// Add same-origin referrer policy so we can check for valid requests
-		Util::addHeader('meta', ['name' => 'referrer', 'content' => 'same-origin']);
-
-		$parameters = [
-			'alt_login' => OC_App::getAlternativeLogIns(),
-			'pageTitle' => $this->l10n->t('Login'),
-		];
-
-		$this->initialState->provideInitialState('countAlternativeLogins', count($parameters['alt_login']));
-		$this->initialState->provideInitialState('alternativeLogins', $parameters['alt_login']);
-		$this->initialState->provideInitialState('loginTimeout', $this->config->getSystemValueInt('login_form_timeout', 5 * 60));
-
-		return new TemplateResponse(
-			$this->appName,
-			'login',
-			$parameters,
-			TemplateResponse::RENDER_AS_GUEST,
-		);
-	}
-
-	/**
-	 * Sets the password reset state
-	 *
-	 * @param string $username
-	 */
-	private function setPasswordResetInitialState(?string $username): void {
-		if ($username !== null && $username !== '') {
-			$user = $this->userManager->get($username);
-		} else {
-			$user = null;
-		}
-
-		$passwordLink = $this->config->getSystemValueString('lost_password_link', '');
-
-		$this->initialState->provideInitialState(
-			'loginResetPasswordLink',
-			$passwordLink
-		);
-
-		$this->initialState->provideInitialState(
-			'loginCanResetPassword',
-			$this->canResetPassword($passwordLink, $user)
-		);
-	}
-
-	/**
-	 * Sets the initial state of whether or not a user is allowed to login with their email
-	 * initial state is passed in the array of 1 for email allowed and 0 for not allowed
-	 */
-	private function setEmailStates(): void {
-		$emailStates = []; // true: can login with email, false otherwise - default to true
-
-		// check if user_ldap is enabled, and the required classes exist
-		if ($this->appManager->isAppLoaded('user_ldap')
-			&& class_exists(Helper::class)) {
-			$helper = Server::get(Helper::class);
-			$allPrefixes = $helper->getServerConfigurationPrefixes();
-			// check each LDAP server the user is connected too
-			foreach ($allPrefixes as $prefix) {
-				$emailConfig = new Configuration($prefix);
-				array_push($emailStates, $emailConfig->__get('ldapLoginFilterEmail'));
-			}
-		}
-		$this->initialState->provideInitialState('emailStates', $emailStates);
-	}
-
-	/**
-	 * @param string|null $passwordLink
-	 * @param IUser|null $user
-	 *
-	 * Users may not change their passwords if:
-	 * - The account is disabled
-	 * - The backend doesn't support password resets
-	 * - The password reset function is disabled
-	 *
-	 * @return bool
-	 */
-	private function canResetPassword(?string $passwordLink, ?IUser $user): bool {
-		if ($passwordLink === 'disabled') {
-			return false;
-		}
-
-		if (!$passwordLink && $user !== null) {
-			return $user->canChangePassword();
-		}
-
-		if ($user !== null && $user->isEnabled() === false) {
-			return false;
-		}
-
-		return true;
-	}
-
-	private function generateRedirect(?string $redirectUrl): RedirectResponse {
-		if ($redirectUrl !== null && $this->userSession->isLoggedIn()) {
-			$location = $this->urlGenerator->getAbsoluteURL($redirectUrl);
-			// Deny the redirect if the URL contains a @
-			// This prevents unvalidated redirects like ?redirect_url=:user@domain.com
-			if (!str_contains($location, '@')) {
-				return new RedirectResponse($location);
-			}
-		}
-		return new RedirectResponse($this->urlGenerator->linkToDefaultPageUrl());
+		return new StandaloneTemplateResponse($this->appName, 'error', ['errors' => [['error' => 'Signing in is through PlainShow', 'hint' => 'PlainShow sign-in is not set up on this server yet.']]], 'guest');
 	}
 
 	#[NoCSRFRequired]
@@ -292,120 +145,9 @@ class LoginController extends Controller {
 	#[UseSession]
 	#[OpenAPI(scope: OpenAPI::SCOPE_IGNORE)]
 	#[FrontpageRoute(verb: 'POST', url: '/login')]
-	public function tryLogin(
-		Chain $loginChain,
-		ITrustedDomainHelper $trustedDomainHelper,
-		string $user = '',
-		string $password = '',
-		bool $rememberme = false,
-		?string $redirect_url = null,
-		string $timezone = '',
-		string $timezone_offset = '',
-	): RedirectResponse {
-		$error = '';
-
-		$origin = $this->request->getHeader('Origin');
-		$throttle = true;
-		if ($origin === '' || !$trustedDomainHelper->isTrustedUrl($origin)) {
-			// Login attempt not from the same origin,
-			// We only allow this on the login flow but not on the UI login page.
-			// This could have come from someone malicious who tries to block a user by triggering the bruteforce protection.
-			$error = self::LOGIN_MSG_INVALID_ORIGIN;
-			$throttle = false;
-		} elseif (!$this->request->passesCSRFCheck()) {
-			if ($this->userSession->isLoggedIn()) {
-				// If the user is already logged in and the CSRF check does not pass then
-				// simply redirect the user to the correct page as required. This is the
-				// case when a user has already logged-in, in another tab.
-				return $this->generateRedirect($redirect_url);
-			}
-			$throttle = false;
-			$error = self::LOGIN_MSG_CSRFCHECKFAILED;
-		}
-
-		if ($error !== '') {
-			// Clear any auth remnants like cookies to ensure a clean login
-			// For the next attempt
-			$this->userSession->logout();
-			return $this->createLoginFailedResponse(
-				$user,
-				$user,
-				$redirect_url,
-				$error,
-				$throttle,
-			);
-		}
-
-		$user = trim($user);
-
-		if (strlen($user) > 255) {
-			return $this->createLoginFailedResponse(
-				$user,
-				$user,
-				$redirect_url,
-				$this->l10n->t('Unsupported email length (>255)')
-			);
-		}
-
-		$data = new LoginData(
-			$this->request,
-			$user,
-			$password,
-			$rememberme,
-			$redirect_url,
-			$timezone,
-			$timezone_offset,
-		);
-		$result = $loginChain->process($data);
-		if (!$result->isSuccess()) {
-			return $this->createLoginFailedResponse(
-				$data->getUsername(),
-				$user,
-				$redirect_url,
-				$result->getErrorMessage()
-			);
-		}
-
-		if ($result->getRedirectUrl() !== null) {
-			return new RedirectResponse($result->getRedirectUrl());
-		}
-		return $this->generateRedirect($redirect_url);
-	}
-
-	/**
-	 * Creates a login failed response.
-	 *
-	 * @param string $user
-	 * @param string $originalUser
-	 * @param string $redirect_url
-	 * @param string $loginMessage
-	 *
-	 * @return RedirectResponse
-	 */
-	private function createLoginFailedResponse(
-		$user,
-		$originalUser,
-		$redirect_url,
-		string $loginMessage,
-		bool $throttle = true,
-	) {
-		// Read current user and append if possible we need to
-		// return the unmodified user otherwise we will leak the login name
-		$args = $user !== null ? ['user' => $originalUser, 'direct' => 1] : [];
-		if ($redirect_url !== null) {
-			$args['redirect_url'] = $redirect_url;
-		}
-		$response = new RedirectResponse(
-			$this->urlGenerator->linkToRoute('core.login.showLoginForm', $args)
-		);
-		if ($throttle) {
-			$response->throttle(['user' => substr($user, 0, 64)]);
-		}
-		$this->session->set('loginMessages', [
-			[$loginMessage], []
-		]);
-
-		return $response;
+	public function tryLogin(?string $redirect_url = null): RedirectResponse {
+		// No password sign-in in PlainShow Cloud: everyone signs in with PlainShow.
+		return new RedirectResponse($this->urlGenerator->linkToRoute('core.login.showLoginForm', ['redirect_url' => $redirect_url]));
 	}
 
 	/**
