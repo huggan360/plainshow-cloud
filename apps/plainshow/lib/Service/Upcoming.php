@@ -45,8 +45,9 @@ class Upcoming {
                     }
                     foreach ($vcalendar->VEVENT ?? [] as $event) {
                         $allDay = !$event->DTSTART->hasTime();
-                        $from = DateTimeImmutable::createFromInterface($event->DTSTART->getDateTime($zone));
-                        $to = isset($event->DTEND) ? DateTimeImmutable::createFromInterface($event->DTEND->getDateTime($zone)) : $from;
+                        // Expanding gives UTC; people read their calendar in Swedish time.
+                        $from = DateTimeImmutable::createFromInterface($event->DTSTART->getDateTime($zone))->setTimezone($zone);
+                        $to = isset($event->DTEND) ? DateTimeImmutable::createFromInterface($event->DTEND->getDateTime($zone))->setTimezone($zone) : $from;
                         if ($to < $now && !($allDay && $to >= $start)) {
                             continue;
                         }
