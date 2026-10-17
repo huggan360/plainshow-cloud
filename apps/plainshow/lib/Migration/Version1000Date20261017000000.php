@@ -17,18 +17,20 @@ use OCP\Migration\SimpleMigrationStep;
  * on install, when Nextcloud only applies the schema part of migrations.)
  */
 class Version1000Date20261017000000 extends SimpleMigrationStep {
-    public function __construct(
-        private IConfig $config,
-    ) {
+    private string $prefix;
+
+    public function __construct(IConfig $config) {
+        $this->prefix = $config->getSystemValueString('dbtableprefix', 'oc_');
     }
 
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
         /** @var ISchemaWrapper $schema */
         $schema = $schemaClosure();
-        $prefix = $this->config->getSystemValueString('dbtableprefix', 'oc_');
         $drop = Removed::TABLES;
-        foreach ($schema->getTableNames() as $table) {
-            $name = str_starts_with($table, $prefix) ? substr($table, strlen($prefix)) : $table;
+        foreach ($schema->getTableNames() as $qualified) {
+            // DBAL names tables "database.prefix_table".
+            $name = substr($qualified, strrpos($qualified, '.') === false ? 0 : strrpos($qualified, '.') + 1);
+            $name = str_starts_with($name, $this->prefix) ? substr($name, strlen($this->prefix)) : $name;
             foreach (Removed::TABLE_FAMILIES as $family) {
                 if (str_starts_with($name, $family)) {
                     $drop[] = $name;
