@@ -12,7 +12,8 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 
 /**
- * From Nextcloud to PlainShow Cloud, inside the tables that stay: the removed
+ * From Nextcloud to PlainShow Cloud: the removed apps' tables go, and inside
+ * the tables that stay: the removed
  * apps' settings, migrations and background jobs go; Talk's chats and room
  * shares go with Talk; no two-factor provider is left switched on; the photo
  * albums become PlainShow's. Safe to run again.
@@ -30,6 +31,7 @@ class Cleanup implements IRepairStep {
 
     public function run(IOutput $output): void {
         $prefix = $this->config->getSystemValueString('dbtableprefix', 'oc_');
+        $this->dropTables($prefix, $output);
         foreach (Removed::RENAMES as $from => $to) {
             if ($this->db->tableExists($from) && !$this->db->tableExists($to)) {
                 $this->db->executeStatement('RENAME TABLE `' . $prefix . $from . '` TO `' . $prefix . $to . '`');
@@ -65,6 +67,37 @@ class Cleanup implements IRepairStep {
             $this->delete('jobs', 'id', $ids, IQueryBuilder::PARAM_INT_ARRAY);
         }
         $output->info(count($gone) . ' background jobs of removed apps deleted');
+    }
+
+    /**
+     * The removed apps' tables, and whole families of them. Some old apps'
+     * tables point at each other in a circle, so foreign key checks are
+     * paused for the drops (PlainShow Cloud runs on MariaDB).
+     */
+    private function dropTables(string $prefix, IOutput $output): void {
+        $drop = [];
+        foreach ($this->db->executeQuery('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN) as $table) {
+            if (!str_starts_with($table, $prefix)) {
+                continue;
+            }
+            $name = substr($table, strlen($prefix));
+            $family = array_filter(Removed::TABLE_FAMILIES, fn (string $start) => str_starts_with($name, $start));
+            if (in_array($name, Removed::TABLES, true) || $family !== []) {
+                $drop[] = $table;
+            }
+        }
+        if ($drop === []) {
+            return;
+        }
+        $this->db->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
+        try {
+            foreach ($drop as $table) {
+                $this->db->executeStatement('DROP TABLE IF EXISTS `' . $table . '`');
+            }
+        } finally {
+            $this->db->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
+        }
+        $output->info(count($drop) . ' tables of removed apps dropped');
     }
 
     private function delete(string $table, string $column, array $values, int $type = IQueryBuilder::PARAM_STR_ARRAY): void {
