@@ -9,9 +9,6 @@ namespace OC\Core\Controller;
 use OC\Authentication\Events\AppPasswordCreatedEvent;
 use OC\Authentication\Exceptions\PasswordlessTokenException;
 use OC\Authentication\Token\IProvider;
-use OCA\OAuth2\Db\AccessToken;
-use OCA\OAuth2\Db\AccessTokenMapper;
-use OCA\OAuth2\Db\ClientMapper;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
@@ -38,11 +35,15 @@ use OCP\IRequest;
 use OCP\ISession;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
-use OCP\Security\ICrypto;
 use OCP\Security\ISecureRandom;
 use OCP\Session\Exceptions\SessionNotAvailableException;
 use OCP\Util;
 
+/**
+ * Login Flow v1, which the phone apps open in a web view: sign in, then a new
+ * app password goes back to the app through nc://login. PlainShow Cloud has no
+ * OAuth2 clients, so only that path is left.
+ */
 #[OpenAPI(scope: OpenAPI::SCOPE_IGNORE)]
 class ClientFlowLoginController extends Controller {
 	public const STATE_NAME = 'client.flow.state.token';
@@ -57,9 +58,6 @@ class ClientFlowLoginController extends Controller {
 		private IProvider $tokenProvider,
 		private ISecureRandom $random,
 		private IURLGenerator $urlGenerator,
-		private ClientMapper $clientMapper,
-		private AccessTokenMapper $accessTokenMapper,
-		private ICrypto $crypto,
 		private IEventDispatcher $eventDispatcher,
 		private ITimeFactory $timeFactory,
 		private IConfig $config,
@@ -100,15 +98,10 @@ class ClientFlowLoginController extends Controller {
 	#[FrontpageRoute(verb: 'GET', url: '/login/flow')]
 	public function showAuthPickerPage(string $clientIdentifier = '', string $user = '', int $direct = 0, string $providedRedirectUri = ''): StandaloneTemplateResponse {
 		$clientName = $this->getClientName();
-		$client = null;
-		if ($clientIdentifier !== '') {
-			$client = $this->clientMapper->getByIdentifier($clientIdentifier);
-			$clientName = $client->getName();
-		}
 
-		// No valid clientIdentifier given and no valid API Request (APIRequest header not set)
+		// Only the apps, which send the API request header. OAuth2 clients are gone.
 		$clientRequest = $this->request->getHeader('OCS-APIREQUEST');
-		if ($clientRequest !== 'true' && $client === null) {
+		if ($clientRequest !== 'true' || $clientIdentifier !== '') {
 			return new StandaloneTemplateResponse(
 				$this->appName,
 				'error',
@@ -132,11 +125,7 @@ class ClientFlowLoginController extends Controller {
 		$this->session->set(self::STATE_NAME, $stateToken);
 
 		$csp = new ContentSecurityPolicy();
-		if ($client) {
-			$csp->addAllowedFormActionDomain($client->getRedirectUri());
-		} else {
-			$csp->addAllowedFormActionDomain('nc://*');
-		}
+		$csp->addAllowedFormActionDomain('nc://*');
 
 		$this->initialState->provideInitialState('loginFlowState', 'auth');
 		$this->initialState->provideInitialState('loginFlowAuth', [
@@ -187,19 +176,13 @@ class ClientFlowLoginController extends Controller {
 			return $this->stateTokenForbiddenResponse();
 		}
 
-		$clientName = $this->getClientName();
-		$client = null;
 		if ($clientIdentifier !== '') {
-			$client = $this->clientMapper->getByIdentifier($clientIdentifier);
-			$clientName = $client->getName();
+			return $this->stateTokenForbiddenResponse();
 		}
+		$clientName = $this->getClientName();
 
 		$csp = new ContentSecurityPolicy();
-		if ($client) {
-			$csp->addAllowedFormActionDomain($client->getRedirectUri());
-		} else {
-			$csp->addAllowedFormActionDomain('nc://*');
-		}
+		$csp->addAllowedFormActionDomain('nc://*');
 
 		$user = $this->userSession->getUser();
 		\assert($user !== null);
@@ -270,12 +253,10 @@ class ClientFlowLoginController extends Controller {
 			return $response;
 		}
 
-		$clientName = $this->getClientName();
-		$client = false;
 		if ($clientIdentifier !== '') {
-			$client = $this->clientMapper->getByIdentifier($clientIdentifier);
-			$clientName = $client->getName();
+			return $this->stateTokenForbiddenResponse();
 		}
+		$clientName = $this->getClientName();
 
 		$token = $this->random->generate(72, ISecureRandom::CHAR_UPPER . ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_DIGITS);
 		$uid = $this->userSession->getUser()->getUID();
@@ -289,48 +270,10 @@ class ClientFlowLoginController extends Controller {
 			IToken::DO_NOT_REMEMBER
 		);
 
-		if ($client) {
-			$code = $this->random->generate(128, ISecureRandom::CHAR_UPPER . ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_DIGITS);
-			$accessToken = new AccessToken();
-			$accessToken->setClientId($client->getId());
-			$accessToken->setEncryptedToken($this->crypto->encrypt($token, $code));
-			$accessToken->setHashedCode(hash('sha512', $code));
-			$accessToken->setTokenId($generatedToken->getId());
-			$accessToken->setCodeCreatedAt($this->timeFactory->now()->getTimestamp());
-			$this->accessTokenMapper->insert($accessToken);
+		$redirectUri = 'nc://login/server:' . $this->getServerPath() . '&user:' . urlencode($loginName) . '&password:' . urlencode($token);
 
-			$enableOcClients = $this->config->getSystemValueBool('oauth2.enable_oc_clients', false);
-
-			$redirectUri = $client->getRedirectUri();
-			if ($enableOcClients && $redirectUri === 'http://localhost:*') {
-				// Sanity check untrusted redirect URI provided by the client first
-				if (!preg_match('/^http:\/\/localhost:[0-9]+$/', $providedRedirectUri)) {
-					$response = new Response();
-					$response->setStatus(Http::STATUS_FORBIDDEN);
-					return $response;
-				}
-
-				$redirectUri = $providedRedirectUri;
-			}
-
-			if (parse_url($redirectUri, PHP_URL_QUERY)) {
-				$redirectUri .= '&';
-			} else {
-				$redirectUri .= '?';
-			}
-
-			$redirectUri .= sprintf(
-				'state=%s&code=%s',
-				urlencode($this->session->get('oauth.state')),
-				urlencode($code)
-			);
-			$this->session->remove('oauth.state');
-		} else {
-			$redirectUri = 'nc://login/server:' . $this->getServerPath() . '&user:' . urlencode($loginName) . '&password:' . urlencode($token);
-
-			// Clear the token from the login here
-			$this->tokenProvider->invalidateToken($sessionId);
-		}
+		// Clear the token from the login here
+		$this->tokenProvider->invalidateToken($sessionId);
 
 		$this->eventDispatcher->dispatchTyped(
 			new AppPasswordCreatedEvent($generatedToken)

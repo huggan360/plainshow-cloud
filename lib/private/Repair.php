@@ -47,7 +47,6 @@ use OC\Repair\NC30\RemoveLegacyDatadirFile;
 use OC\Repair\OldGroupMembershipShares;
 use OC\Repair\Owncloud\CleanPreviews;
 use OC\Repair\Owncloud\DropAccountTermsTable;
-use OC\Repair\Owncloud\MigrateOauthTables;
 use OC\Repair\Owncloud\MigratePropertiesTable;
 use OC\Repair\Owncloud\MoveAvatars;
 use OC\Repair\Owncloud\SaveAccountsTableData;
@@ -167,7 +166,6 @@ class Repair implements IOutput {
 			Server::get(MoveAvatars::class),
 			Server::get(CleanPreviews::class),
 			Server::get(MigratePropertiesTable::class),
-			Server::get(MigrateOauthTables::class),
 			Server::get(UpdateLanguageCodes::class),
 			Server::get(AddLogRotateJob::class),
 			Server::get(ClearFrontendCaches::class),

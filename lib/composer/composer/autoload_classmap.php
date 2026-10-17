@@ -2132,7 +2132,6 @@ return array(
     'OC\\Repair\\Owncloud\\CleanPreviews' => $baseDir . '/lib/private/Repair/Owncloud/CleanPreviews.php',
     'OC\\Repair\\Owncloud\\CleanPreviewsBackgroundJob' => $baseDir . '/lib/private/Repair/Owncloud/CleanPreviewsBackgroundJob.php',
     'OC\\Repair\\Owncloud\\DropAccountTermsTable' => $baseDir . '/lib/private/Repair/Owncloud/DropAccountTermsTable.php',
-    'OC\\Repair\\Owncloud\\MigrateOauthTables' => $baseDir . '/lib/private/Repair/Owncloud/MigrateOauthTables.php',
     'OC\\Repair\\Owncloud\\MigratePropertiesTable' => $baseDir . '/lib/private/Repair/Owncloud/MigratePropertiesTable.php',
     'OC\\Repair\\Owncloud\\MoveAvatars' => $baseDir . '/lib/private/Repair/Owncloud/MoveAvatars.php',
     'OC\\Repair\\Owncloud\\MoveAvatarsBackgroundJob' => $baseDir . '/lib/private/Repair/Owncloud/MoveAvatarsBackgroundJob.php',

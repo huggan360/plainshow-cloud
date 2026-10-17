@@ -2173,7 +2173,6 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Repair\\Owncloud\\CleanPreviews' => __DIR__ . '/../../..' . '/lib/private/Repair/Owncloud/CleanPreviews.php',
         'OC\\Repair\\Owncloud\\CleanPreviewsBackgroundJob' => __DIR__ . '/../../..' . '/lib/private/Repair/Owncloud/CleanPreviewsBackgroundJob.php',
         'OC\\Repair\\Owncloud\\DropAccountTermsTable' => __DIR__ . '/../../..' . '/lib/private/Repair/Owncloud/DropAccountTermsTable.php',
-        'OC\\Repair\\Owncloud\\MigrateOauthTables' => __DIR__ . '/../../..' . '/lib/private/Repair/Owncloud/MigrateOauthTables.php',
         'OC\\Repair\\Owncloud\\MigratePropertiesTable' => __DIR__ . '/../../..' . '/lib/private/Repair/Owncloud/MigratePropertiesTable.php',
         'OC\\Repair\\Owncloud\\MoveAvatars' => __DIR__ . '/../../..' . '/lib/private/Repair/Owncloud/MoveAvatars.php',
         'OC\\Repair\\Owncloud\\MoveAvatarsBackgroundJob' => __DIR__ . '/../../..' . '/lib/private/Repair/Owncloud/MoveAvatarsBackgroundJob.php',
