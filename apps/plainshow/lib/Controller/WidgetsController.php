@@ -70,13 +70,13 @@ class WidgetsController extends Controller {
     }
 
     private function photos(string $account): array {
-        $items = array_map(fn ($file) => [
-            'title' => $file->getName(),
-            'image' => $this->urls->getAbsoluteURL('/index.php/apps/plainshow/thumb/' . $file->getId() . '?' . $this->signing->thumbQuery($account, $file->getId(), 256)),
+        $images = array_map(fn ($file) => [
+            'src' => $this->urls->getAbsoluteURL('/index.php/apps/plainshow/thumb/' . $file->getId() . '?' . $this->signing->thumbQuery($account, $file->getId(), 256)),
             'url' => $this->urls->getAbsoluteURL('/index.php/f/' . $file->getId()),
+            'alt' => $file->getName(),
         ], $this->recent->photos($account, 12));
 
-        return ['type' => 'gallery', 'items' => $items, 'empty' => 'No photos yet.', 'more' => ['label' => 'Photos', 'url' => $this->urls->getAbsoluteURL('/')]];
+        return ['type' => 'gallery', 'images' => $images, 'empty' => 'No photos yet.', 'more' => ['label' => 'Photos', 'url' => $this->urls->getAbsoluteURL('/')]];
     }
 
     private function answer(array $data, int $status = Http::STATUS_OK): JSONResponse {
