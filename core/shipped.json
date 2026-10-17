@@ -32,7 +32,6 @@
 		"files",
 		"provisioning_api",
 		"settings",
-		"theming",
-		"plainshow"
+		"theming"
 	]
 }
