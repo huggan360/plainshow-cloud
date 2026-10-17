@@ -17,6 +17,11 @@ class Application extends App implements IBootstrap {
     }
 
     public function register(IRegistrationContext $context): void {
+        // plainshow/kit and whatever else composer brought.
+        $autoload = __DIR__ . '/../../vendor/autoload.php';
+        if (is_file($autoload)) {
+            require_once $autoload;
+        }
     }
 
     public function boot(IBootContext $context): void {

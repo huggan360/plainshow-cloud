@@ -25,6 +25,7 @@ step "Code: $REF"
 git fetch -q origin 2>/dev/null || true
 git checkout -q "$REF"
 git clean -fdq apps custom_apps
+composer install --quiet --no-dev --no-interaction --working-dir apps/plainshow
 
 step "Settings: no app store, no updates, no integrity check (this is a fork)"
 occ config:system:set appstoreenabled --value=false --type=boolean

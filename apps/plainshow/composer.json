@@ -1,0 +1,17 @@
+{
+    "name": "plainshow/cloud-app",
+    "description": "PlainShow Cloud: the app inside the Nextcloud engine.",
+    "type": "project",
+    "license": "AGPL-3.0-or-later",
+    "require": {
+        "php": "^8.2",
+        "plainshow/kit": "^1.4"
+    },
+    "repositories": [
+        {"type": "vcs", "url": "https://github.com/huggan360/plainshow-kit.git", "no-api": true}
+    ],
+    "config": {
+        "preferred-install": {"plainshow/*": "source", "*": "dist"},
+        "optimize-autoloader": true
+    }
+}
