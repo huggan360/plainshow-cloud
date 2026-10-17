@@ -15,7 +15,7 @@ step "Maintenance mode on"
 occ maintenance:mode --on
 
 step "Switch off the apps that go (on the old code, so they uninstall cleanly)"
-removed=$(git show "$REF":apps/plainshow/lib/Migration/Version1000Date20261017000000.php | sed -n "/REMOVED_APPS = \[/,/\];/p" | grep -o "'[a-z0-9_]*'" | tr -d "'")
+removed=$(git show "$REF":apps/plainshow/lib/Removed.php | sed -n "/REMOVED_APPS = \[/,/\];/p" | grep -o "'[a-z0-9_]*'" | tr -d "'")
 enabled=$(occ maintenance:mode --off >/dev/null; occ app:list --enabled --output=json | python3 -c "import json,sys;print(' '.join(json.load(sys.stdin)['enabled']))"; occ maintenance:mode --on >/dev/null)
 for app in $removed; do
     case " $enabled " in *" $app "*) occ app:disable "$app" 2>&1 | tail -1 || true;; esac

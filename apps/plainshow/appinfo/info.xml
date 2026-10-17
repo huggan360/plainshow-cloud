@@ -11,6 +11,14 @@
     <namespace>PlainShow</namespace>
     <category>files</category>
     <bugs>https://github.com/huggan360/plainshow-cloud</bugs>
+    <repair-steps>
+        <install>
+            <step>OCA\PlainShow\Repair\Cleanup</step>
+        </install>
+        <post-migration>
+            <step>OCA\PlainShow\Repair\Cleanup</step>
+        </post-migration>
+    </repair-steps>
     <dependencies>
         <nextcloud min-version="34" max-version="34"/>
     </dependencies>
