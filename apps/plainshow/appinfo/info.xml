@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>plainshow</id>
+    <name>PlainShow Cloud</name>
+    <summary>Files, photos and calendar in PlainShow</summary>
+    <description>PlainShow's own Cloud, on the Nextcloud engine underneath.</description>
+    <version>1.0.0</version>
+    <licence>agpl</licence>
+    <author>PlainShow</author>
+    <namespace>PlainShow</namespace>
+    <category>files</category>
+    <bugs>https://github.com/huggan360/plainshow-cloud</bugs>
+    <dependencies>
+        <nextcloud min-version="34" max-version="34"/>
+    </dependencies>
+</info>

@@ -10,7 +10,8 @@
 		"provisioning_api",
 		"settings",
 		"systemtags",
-		"theming"
+		"theming",
+		"plainshow"
 	],
 	"defaultEnabled": [
 		"dav",
@@ -23,13 +24,15 @@
 		"provisioning_api",
 		"settings",
 		"systemtags",
-		"theming"
+		"theming",
+		"plainshow"
 	],
 	"alwaysEnabled": [
 		"dav",
 		"files",
 		"provisioning_api",
 		"settings",
-		"theming"
+		"theming",
+		"plainshow"
 	]
 }
