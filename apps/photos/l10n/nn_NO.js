@@ -1,0 +1,25 @@
+OC.L10N.register(
+    "photos",
+    {
+    "Photos" : "Foto",
+    "Videos" : "Video",
+    "People" : "Folk",
+    "Folders" : "Mapper",
+    "Favorites" : "Favorit",
+    "Shared with you" : "Shared with you",
+    "Tags" : "Emneord",
+    "Back" : "Tilbake",
+    "Save" : "Lagre",
+    "Shared by" : "Delt av",
+    "An error occurred" : "Det oppstod ein feil.",
+    "Favorite" : "Favoritt",
+    "Home" : "Heim",
+    "Upload folder" : "Last opp mappe",
+    "General" : "Generelt",
+    "Remove from favorites" : "Remove from favorites",
+    "Group" : "Gruppe",
+    "View" : "Vis",
+    "Details" : "Detaljar",
+    "Cancel" : "Cancel"
+},
+"nplurals=2; plural=(n != 1);");

@@ -1,0 +1,8 @@
+{ "translations": {
+    "Add" : "Add",
+    "Retry" : "Retry",
+    "Your browser does not support WebAuthn." : "Your browser does not support WebAuthn.",
+    "Active" : "Active",
+    "Remove" : "Remove"
+},"pluralForm" :"nplurals=2; plural=(n!=1);"
+}

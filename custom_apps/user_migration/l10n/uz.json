@@ -1,0 +1,8 @@
+{ "translations": {
+    "Files" : "Fayllar",
+    "Export" : "Eksport",
+    "Cancel" : "Bekor qilish",
+    "Close" : "Yopish",
+    "Import" : "Import"
+},"pluralForm" :"nplurals=1; plural=0;"
+}

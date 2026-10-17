@@ -1,0 +1,24 @@
+OC.L10N.register(
+    "twofactor_webauthn",
+    {
+    "WebAuthn disabled by the administration" : "WebAuthn on poistettu käytöstä ylläpitäjän toimesta",
+    "Security key" : "Turva-avain",
+    "Use WebAuthn for second factor authentication" : "Käytä WebAuthnia kaksivaiheiseen todentamiseen",
+    "Server error while trying to complete security key registration" : "Palvelinvirhe turva-avaimen rekisteröinnin aikana",
+    "Add security key" : "Lisää turva-avain",
+    "Name your security key" : "Anna turva-avaimellesi nimi",
+    "Add" : "Lisä",
+    "Adding your security key …" : "Lisätään turva-avaimesi…",
+    "An error occurred: {msg}" : "Tapahtui virhe: {msg}",
+    "Retry" : "Yritä uudelleen",
+    "Use security key" : "Käytä turva-avainta",
+    "An error occurred. Please try again." : "Tapahtui virhe. Yritä myöhemmin uudelleen.",
+    "Your browser does not support WebAuthn." : "Selaimesi ei tue WebAuthn-standardia.",
+    "Unnamed key" : "Nimetön avain",
+    "Active" : "Aktiivinen",
+    "Remove" : "Poista",
+    "Your security key was added successfully. You are now being redirected to the login page." : "Turva-avaimesi liitettiin onnistuneesti. Sinut uudelleenohjataan nyt kirjautumissivulle.",
+    "No security keys configured. You are not using WebAuthn as second factor at the moment." : "Turva-avaimia ei ole määritetty. Et käytä kaksivaiheista WebAuthn-todennusta tällä hetkellä.",
+    "The following security keys are configured for WebAuthn two-factor authentication:" : "Seuraavat turva-avaimet on määritetty kaksivaiheista WebAuthn-todennusta varten:"
+},
+"nplurals=2; plural=(n != 1);");

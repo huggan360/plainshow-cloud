@@ -1,0 +1,8 @@
+{ "translations": {
+    "Files" : "Ֆայլեր",
+    "Export" : "Արտահանում",
+    "Cancel" : "ընդհատել",
+    "Close" : "Փակել",
+    "Import" : "Ներմուծում"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

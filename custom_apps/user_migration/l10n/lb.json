@@ -1,0 +1,8 @@
+{ "translations": {
+    "Files" : "Fichieren",
+    "Export" : "Exportéieren",
+    "Cancel" : "Ofbriechen",
+    "Close" : "Zoumaachen",
+    "Import" : "Importéieren"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

@@ -1,0 +1,9 @@
+{ "translations": {
+    "Files" : "Bestanden",
+    "Data migration" : "Gegevensmigratie",
+    "Export" : "Exporteren",
+    "Cancel" : "Annuleren",
+    "Close" : "Sluit",
+    "Import" : "Import"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

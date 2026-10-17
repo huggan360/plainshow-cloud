@@ -1,0 +1,25 @@
+OC.L10N.register(
+    "serverinfo",
+    {
+    "System" : "Sistem",
+    "Webcron" : "Webcron",
+    "Background jobs" : "Background işlər",
+    "Never" : "Heç vaxt",
+    "Database" : "Verilənlər bazası",
+    "Type:" : "Tip:",
+    "Size:" : "Həcm:",
+    "Status" : "Status",
+    "Details" : "Detallar",
+    "Authentication" : "Autentifikasiya",
+    "Hostname" : "Sahibadı",
+    "PHP" : "PHP",
+    "seconds" : "saniyələr",
+    "Shares" : "Yayımlanmalar",
+    "Warning" : "Xəbərdarlıq",
+    "Copied!" : "Kopyalandı!",
+    "Not supported!" : "Dəstəklənmir!",
+    "Press ⌘-C to copy." : "Kopyalamaq üçün ⌘-C basın.",
+    "Press Ctrl-C to copy." : "Kopyalamaq üçün Ctrl-C basın.",
+    "Copy" : "Kopyala"
+},
+"nplurals=2; plural=(n != 1);");

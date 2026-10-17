@@ -1,0 +1,27 @@
+SPDX-License-Identifier: BSD-3-Clause
+SPDX-License-Identifier: MIT
+SPDX-FileCopyrightText: Andrii Kostenko
+SPDX-FileCopyrightText: DY <dfcreative@gmail.com>
+SPDX-FileCopyrightText: Dan Kogai
+SPDX-FileCopyrightText: Heather Arthur <fayearthur@gmail.com>
+SPDX-FileCopyrightText: Qix (http://github.com/qix-)
+
+This file is generated from multiple sources. Included packages:
+- color-name
+	- version: 1.1.3
+	- license: MIT
+- color-string
+	- version: 1.9.1
+	- license: MIT
+- is-arrayish
+	- version: 0.3.2
+	- license: MIT
+- js-base64
+	- version: 3.7.7
+	- license: BSD-3-Clause
+- qreator
+	- version: 10.0.2
+	- license: MIT
+- simple-swizzle
+	- version: 0.2.2
+	- license: MIT

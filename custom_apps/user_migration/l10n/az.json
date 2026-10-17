@@ -1,0 +1,8 @@
+{ "translations": {
+    "Files" : "Fayllar",
+    "Export" : "Çıxarış",
+    "Cancel" : "Dayandır",
+    "Close" : "Bağla",
+    "Import" : "Əlavə et"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

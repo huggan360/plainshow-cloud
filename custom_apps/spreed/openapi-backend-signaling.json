@@ -1,0 +1,693 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "spreed-backend-signaling",
+        "version": "0.0.1",
+        "description": "Chat, video & audio-conferencing using WebRTC",
+        "license": {
+            "name": "agpl"
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "basic_auth": {
+                "type": "http",
+                "scheme": "basic"
+            },
+            "bearer_auth": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "Capabilities": {
+                "type": "object",
+                "required": [
+                    "features",
+                    "features-local",
+                    "config",
+                    "config-local",
+                    "version"
+                ],
+                "properties": {
+                    "features": {
+                        "type": "array",
+                        "description": "List of features available on the server",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1
+                    },
+                    "features-local": {
+                        "type": "array",
+                        "description": "List of features only available locally (not for federated conversations)",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1
+                    },
+                    "config": {
+                        "type": "object",
+                        "required": [
+                            "attachments",
+                            "call",
+                            "chat",
+                            "conversations",
+                            "federation",
+                            "previews",
+                            "signaling",
+                            "experiments",
+                            "feature-hints",
+                            "permissions"
+                        ],
+                        "properties": {
+                            "attachments": {
+                                "type": "object",
+                                "required": [
+                                    "allowed",
+                                    "conversation-subfolders"
+                                ],
+                                "properties": {
+                                    "allowed": {
+                                        "type": "boolean",
+                                        "description": "Whether file sharing is allowed in conversations"
+                                    },
+                                    "folder": {
+                                        "type": "string",
+                                        "description": "User's attachment folder (only available for logged in users)"
+                                    },
+                                    "conversation-subfolders": {
+                                        "type": "boolean",
+                                        "description": "Whether per-conversation subfolders are used for attachments"
+                                    }
+                                }
+                            },
+                            "call": {
+                                "type": "object",
+                                "required": [
+                                    "enabled",
+                                    "breakout-rooms",
+                                    "recording",
+                                    "recording-consent",
+                                    "supported-reactions",
+                                    "predefined-backgrounds",
+                                    "predefined-backgrounds-v2",
+                                    "can-upload-background",
+                                    "sip-enabled",
+                                    "sip-dialout-enabled",
+                                    "default-phone-region",
+                                    "can-enable-sip",
+                                    "start-without-media",
+                                    "max-duration",
+                                    "blur-virtual-background",
+                                    "end-to-end-encryption",
+                                    "live-transcription",
+                                    "live-translation",
+                                    "live-transcription-target-language-id",
+                                    "play-sounds",
+                                    "grid-limit",
+                                    "grid-limit-enforced"
+                                ],
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether calls are enabled"
+                                    },
+                                    "breakout-rooms": {
+                                        "type": "boolean",
+                                        "description": "Whether breakout rooms are enabled"
+                                    },
+                                    "recording": {
+                                        "type": "boolean",
+                                        "description": "Whether call recording is enabled"
+                                    },
+                                    "recording-consent": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Whether recording consent is required (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#recording-consent-required))"
+                                    },
+                                    "supported-reactions": {
+                                        "type": "array",
+                                        "description": "List of supported reaction emojis during calls",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "predefined-backgrounds": {
+                                        "type": "array",
+                                        "description": "List of file names relative to the spreed/img/backgrounds/ web path, e.g. `2_home.jpg`",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "predefined-backgrounds-v2": {
+                                        "type": "array",
+                                        "description": "List of file paths relative to the server web root with leading slash, e.g. `/apps/spreed/img/backgrounds/2_home.jpg`",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "can-upload-background": {
+                                        "type": "boolean",
+                                        "description": "Whether the user can upload custom virtual backgrounds"
+                                    },
+                                    "sip-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether SIP is enabled on the server"
+                                    },
+                                    "sip-dialout-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether SIP dial-out is enabled on the server"
+                                    },
+                                    "default-phone-region": {
+                                        "type": "string",
+                                        "description": "Default phone region of the server"
+                                    },
+                                    "can-enable-sip": {
+                                        "type": "boolean",
+                                        "description": "Whether the user can enable SIP for conversations"
+                                    },
+                                    "start-without-media": {
+                                        "type": "boolean",
+                                        "description": "Whether calls start without media by default"
+                                    },
+                                    "max-duration": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum duration of a call in seconds, `0` means unlimited"
+                                    },
+                                    "blur-virtual-background": {
+                                        "type": "boolean",
+                                        "description": "Whether the blur virtual background is available"
+                                    },
+                                    "end-to-end-encryption": {
+                                        "type": "boolean",
+                                        "description": "Whether end-to-end encryption is available"
+                                    },
+                                    "live-transcription": {
+                                        "type": "boolean",
+                                        "description": "Whether live transcription is available"
+                                    },
+                                    "live-translation": {
+                                        "type": "boolean",
+                                        "description": "Whether live translation is available"
+                                    },
+                                    "live-transcription-target-language-id": {
+                                        "type": "string",
+                                        "description": "The default target language for live transcription"
+                                    },
+                                    "play-sounds": {
+                                        "type": "boolean",
+                                        "description": "Whether to play sounds for call events"
+                                    },
+                                    "grid-limit": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum number of participants shown in the grid view"
+                                    },
+                                    "grid-limit-enforced": {
+                                        "type": "boolean",
+                                        "description": "Whether the grid limit is enforced by the server"
+                                    },
+                                    "external-call-service": {
+                                        "type": "string",
+                                        "description": "URL of an external call service if one is used"
+                                    }
+                                }
+                            },
+                            "chat": {
+                                "type": "object",
+                                "required": [
+                                    "max-length",
+                                    "read-privacy",
+                                    "has-translation-providers",
+                                    "has-translation-task-providers",
+                                    "typing-privacy",
+                                    "summary-threshold",
+                                    "style",
+                                    "matterbridge-enabled"
+                                ],
+                                "properties": {
+                                    "max-length": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum length of a chat message"
+                                    },
+                                    "read-privacy": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Read privacy setting for the user (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#participant-read-status-privacy))"
+                                    },
+                                    "has-translation-providers": {
+                                        "type": "boolean",
+                                        "description": "Whether translation providers are available"
+                                    },
+                                    "has-translation-task-providers": {
+                                        "type": "boolean",
+                                        "description": "Whether translation task providers are available"
+                                    },
+                                    "typing-privacy": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Typing privacy setting for the user (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#participant-typing-privacy))"
+                                    },
+                                    "summary-threshold": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Minimum number of chat messages before a summary can be generated",
+                                        "minimum": 1
+                                    },
+                                    "style": {
+                                        "type": "string",
+                                        "enum": [
+                                            "split",
+                                            "unified"
+                                        ],
+                                        "description": "Chat message rendering style (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#chat-style))"
+                                    },
+                                    "matterbridge-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether Matterbridge is enabled"
+                                    }
+                                }
+                            },
+                            "conversations": {
+                                "type": "object",
+                                "required": [
+                                    "can-create",
+                                    "force-passwords",
+                                    "list-style",
+                                    "description-length",
+                                    "retention-event",
+                                    "retention-phone",
+                                    "retention-instant-meetings",
+                                    "sort-order",
+                                    "group-mode"
+                                ],
+                                "properties": {
+                                    "can-create": {
+                                        "type": "boolean",
+                                        "description": "Whether the user can create conversations"
+                                    },
+                                    "force-passwords": {
+                                        "type": "boolean",
+                                        "description": "Whether passwords are enforced for public conversations"
+                                    },
+                                    "list-style": {
+                                        "type": "string",
+                                        "enum": [
+                                            "two-lines",
+                                            "compact"
+                                        ],
+                                        "description": "Conversation list style (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#conversation-list-style))"
+                                    },
+                                    "description-length": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum length of a conversation description",
+                                        "minimum": 1
+                                    },
+                                    "retention-event": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Retention period for event conversations in seconds, `0` means no retention",
+                                        "minimum": 0
+                                    },
+                                    "retention-phone": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Retention period for phone conversations in seconds, `0` means no retention",
+                                        "minimum": 0
+                                    },
+                                    "retention-instant-meetings": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Retention period for instant meetings in seconds, `0` means no retention",
+                                        "minimum": 0
+                                    },
+                                    "sort-order": {
+                                        "type": "string",
+                                        "enum": [
+                                            "activity",
+                                            "alphabetical"
+                                        ],
+                                        "description": "User selected sort order for conversations (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#conversations-sort-options))"
+                                    },
+                                    "group-mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "none",
+                                            "group-first",
+                                            "private-first"
+                                        ],
+                                        "description": "User selected grouping mode for conversations (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#conversations-group-mode))"
+                                    }
+                                }
+                            },
+                            "federation": {
+                                "type": "object",
+                                "required": [
+                                    "enabled",
+                                    "incoming-enabled",
+                                    "outgoing-enabled",
+                                    "only-trusted-servers"
+                                ],
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether federation is enabled"
+                                    },
+                                    "incoming-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether incoming federation is enabled"
+                                    },
+                                    "outgoing-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether outgoing federation is enabled"
+                                    },
+                                    "only-trusted-servers": {
+                                        "type": "boolean",
+                                        "description": "Whether only trusted servers are allowed for federation"
+                                    }
+                                }
+                            },
+                            "previews": {
+                                "type": "object",
+                                "required": [
+                                    "max-gif-size"
+                                ],
+                                "properties": {
+                                    "max-gif-size": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum GIF file size in bytes for previews"
+                                    }
+                                }
+                            },
+                            "signaling": {
+                                "type": "object",
+                                "required": [
+                                    "session-ping-limit",
+                                    "mode"
+                                ],
+                                "properties": {
+                                    "session-ping-limit": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum number of sessions that can be pinged in a single request"
+                                    },
+                                    "mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "internal",
+                                            "external",
+                                            "conversation_cluster"
+                                        ],
+                                        "description": "Signaling mode (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#signaling-modes))"
+                                    },
+                                    "hello-v2-token-key": {
+                                        "type": "string",
+                                        "description": "Public key for hello v2 authentication"
+                                    }
+                                }
+                            },
+                            "experiments": {
+                                "type": "object",
+                                "required": [
+                                    "enabled"
+                                ],
+                                "properties": {
+                                    "enabled": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Bit-flag of enabled experiments",
+                                        "minimum": 0
+                                    }
+                                }
+                            },
+                            "feature-hints": {
+                                "type": "object",
+                                "required": [
+                                    "current",
+                                    "hidden"
+                                ],
+                                "properties": {
+                                    "current": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "minimum": 1
+                                    },
+                                    "hidden": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "minimum": 0
+                                    }
+                                }
+                            },
+                            "permissions": {
+                                "type": "object",
+                                "required": [
+                                    "max-default",
+                                    "max-custom",
+                                    "default"
+                                ],
+                                "properties": {
+                                    "max-default": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum default permissions (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#attendee-permissions))"
+                                    },
+                                    "max-custom": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum custom permissions (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#attendee-permissions))"
+                                    },
+                                    "default": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Server default permissions (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#attendee-permissions))"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "config-local": {
+                        "type": "object",
+                        "description": "Map of config keys that are only available locally (not for federated conversations)",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "version": {
+                        "type": "string",
+                        "description": "Version of the Talk app"
+                    }
+                }
+            },
+            "OCSMeta": {
+                "type": "object",
+                "required": [
+                    "status",
+                    "statuscode"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "statuscode": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "totalitems": {
+                        "type": "string"
+                    },
+                    "itemsperpage": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PublicCapabilities": {
+                "type": "object",
+                "properties": {
+                    "spreed": {
+                        "$ref": "#/components/schemas/Capabilities"
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/signaling/backend": {
+            "post": {
+                "operationId": "signaling-backend",
+                "summary": "Backend API to query information required for standalone signaling servers",
+                "description": "See sections \"Backend validation\" in https://nextcloud-spreed-signaling.readthedocs.io/en/latest/standalone-signaling-api-v1/#backend-requests",
+                "tags": [
+                    "signaling"
+                ],
+                "security": [
+                    {},
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v3"
+                            ],
+                            "default": "v3"
+                        }
+                    },
+                    {
+                        "name": "spreed-signaling-random",
+                        "in": "header",
+                        "description": "Random seed (at least 32 bytes) used together with the request body to generate the SHA256-HMAC request checksum",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "spreed-signaling-checksum",
+                        "in": "header",
+                        "description": "SHA256-HMAC checksum over the concatenation of the random seed and the request body, signed with the shared signaling secret, to verify authenticity from the signaling backend",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Always, sorry about that",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "type"
+                                                    ],
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string"
+                                                        },
+                                                        "error": {
+                                                            "type": "object",
+                                                            "required": [
+                                                                "code",
+                                                                "message"
+                                                            ],
+                                                            "properties": {
+                                                                "code": {
+                                                                    "type": "string"
+                                                                },
+                                                                "message": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "auth": {
+                                                            "type": "object",
+                                                            "required": [
+                                                                "version"
+                                                            ],
+                                                            "properties": {
+                                                                "version": {
+                                                                    "type": "string"
+                                                                },
+                                                                "userid": {
+                                                                    "type": "string"
+                                                                },
+                                                                "user": {
+                                                                    "type": "object",
+                                                                    "additionalProperties": {
+                                                                        "type": "object"
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "room": {
+                                                            "type": "object",
+                                                            "required": [
+                                                                "version"
+                                                            ],
+                                                            "properties": {
+                                                                "version": {
+                                                                    "type": "string"
+                                                                },
+                                                                "roomid": {
+                                                                    "type": "string"
+                                                                },
+                                                                "properties": {
+                                                                    "type": "object",
+                                                                    "additionalProperties": {
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "permissions": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "session": {
+                                                                    "type": "object",
+                                                                    "additionalProperties": {
+                                                                        "type": "object"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": []
+}

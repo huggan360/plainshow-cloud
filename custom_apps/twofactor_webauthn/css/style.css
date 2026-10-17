@@ -1,0 +1,18 @@
+/**
+ * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+/** icons for personal page settings **/
+.nav-icon-webauthn-second-factor-auth, .icon-webauthn-device {
+	background-image: url('../img/app-dark.svg?v=1');
+}
+
+body.theme--dark .nav-icon-webauthn-second-factor-auth,
+body.theme--dark .icon-webauthn-device {
+	background-image: url('../img/app.svg?v=1');
+}
+
+#webauthn-http-warning {
+	color: var(--color-warning);
+}

@@ -1,0 +1,10 @@
+# PlainShow Cloud: everything that runs is tracked. Only what belongs to this
+# server stays out: its config and secrets, the data folder and generated files.
+/data/
+/config/config.php
+/config/*.config.php
+/config/config.php.*
+/config/CAN_INSTALL
+/assets/
+/node_modules/
+*.log

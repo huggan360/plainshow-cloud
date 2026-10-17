@@ -1,0 +1,12 @@
+OC.L10N.register(
+    "twofactor_webauthn",
+    {
+    "You added an WebAuthn hardware token" : "Вы дадалі апаратны токен WebAuthn",
+    "You removed an WebAuthn hardware token" : "Вы выдалілі апаратны токен WebAuthn",
+    "Add" : "Дадаць",
+    "Retry" : "Паўтарыць спробу",
+    "Your browser does not support WebAuthn." : "Ваш браўзер не падтрымлівае WebAuthn.",
+    "Active" : "Актыўны",
+    "Remove" : "Выдаліць"
+},
+"nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);");

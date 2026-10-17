@@ -1,0 +1,9 @@
+{ "translations": {
+    "Files" : "Filer",
+    "Data migration" : "Datamigrering",
+    "Export" : "Eksportér",
+    "Cancel" : "Annuller",
+    "Close" : "Luk",
+    "Import" : "Importér"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

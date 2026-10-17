@@ -1,0 +1,163 @@
+<?php
+
+declare(strict_types=1);
+/**
+ * SPDX-FileCopyrightText: 2020 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+namespace OCA\Talk\Controller;
+
+use OCA\Talk\DataObjects\AccountId;
+use OCA\Talk\DataObjects\RegisterAccountData;
+use OCA\Talk\Exceptions\HostedSignalingServerAPIException;
+use OCA\Talk\Exceptions\HostedSignalingServerInputException;
+use OCA\Talk\Service\HostedSignalingServerService;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\ApiRoute;
+use OCP\AppFramework\Http\Attribute\BruteForceProtection;
+use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\Http\Attribute\RequestHeader;
+use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\OCSController;
+use OCP\IConfig;
+use OCP\IL10N;
+use OCP\IRequest;
+use Psr\Log\LoggerInterface;
+
+class HostedSignalingServerController extends OCSController {
+
+	public function __construct(
+		string $appName,
+		IRequest $request,
+		private readonly IL10N $l10n,
+		private readonly IConfig $config,
+		private readonly LoggerInterface $logger,
+		private readonly HostedSignalingServerService $hostedSignalingServerService,
+	) {
+		parent::__construct($appName, $request);
+	}
+
+	/**
+	 * Get the authentication credentials
+	 *
+	 * @return DataResponse<Http::STATUS_OK, array{nonce: string}, array{}>|DataResponse<Http::STATUS_FORBIDDEN|Http::STATUS_PRECONDITION_FAILED, null, array{}>
+	 *
+	 * 200: Authentication credentials returned
+	 * 403: Provided nonce is wrong
+	 * 412: Getting authentication credentials is not possible
+	 */
+	#[OpenAPI(scope: OpenAPI::SCOPE_IGNORE)]
+	#[PublicPage]
+	#[BruteForceProtection(action: 'hosted-hpb-nonce')]
+	#[RequestHeader(name: 'x-account-service-nonce', description: 'Random string provided to the hostedsignalingserver entity, so it can verify that it was requested')]
+	#[ApiRoute(verb: 'POST', url: '/api/{apiVersion}/hostedsignalingserver/auth', requirements: [
+		'apiVersion' => '(v1)',
+	])]
+	public function auth(): DataResponse {
+		$sentNonce = $this->request->getHeader('x-account-service-nonce');
+		if ($sentNonce === '') {
+			$response = new DataResponse(null, Http::STATUS_FORBIDDEN);
+			$response->throttle();
+			return $response;
+		}
+
+		$storedNonce = $this->config->getAppValue('spreed', 'hosted-signaling-server-nonce', '');
+		if ($storedNonce === '') {
+			return new DataResponse(null, Http::STATUS_PRECONDITION_FAILED);
+		}
+
+		if (!hash_equals($storedNonce, $sentNonce)) {
+			$response = new DataResponse(null, Http::STATUS_FORBIDDEN);
+			$response->throttle();
+			return $response;
+		}
+
+		// reset nonce after one request
+		$this->config->deleteAppValue('spreed', 'hosted-signaling-server-nonce');
+
+		return new DataResponse([
+			'nonce' => $storedNonce,
+		]);
+	}
+
+	/**
+	 * Request a trial account
+	 *
+	 * @param string $url Server URL
+	 * @param string $name Display name of the user
+	 * @param string $email Email of the user
+	 * @param string $language Language of the user
+	 * @param string $country Country of the user
+	 * @return DataResponse<Http::STATUS_OK, array<string, mixed>, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_INTERNAL_SERVER_ERROR, array{message: string}, array{}>
+	 *
+	 * 200: Trial requested successfully
+	 * 400: Requesting trial is not possible
+	 */
+	#[ApiRoute(verb: 'POST', url: '/api/{apiVersion}/hostedsignalingserver/requesttrial', requirements: [
+		'apiVersion' => '(v1)',
+	])]
+	public function requestTrial(string $url, string $name, string $email, string $language, string $country): DataResponse {
+		try {
+			$registerAccountData = new RegisterAccountData(
+				$url,
+				$name,
+				$email,
+				$language,
+				$country
+			);
+
+			$accountId = $this->hostedSignalingServerService->registerAccount($registerAccountData);
+			$accountInfo = $this->hostedSignalingServerService->fetchAccountInfo($accountId);
+			$this->config->setAppValue('spreed', 'hosted-signaling-server-account', json_encode($accountInfo));
+		} catch (HostedSignalingServerAPIException $e) { // API or connection issues
+			return new DataResponse(['message' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+		} catch (HostedSignalingServerInputException $e) { // user solvable issues
+			return new DataResponse(['message' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		}
+
+		return new DataResponse($accountInfo);
+	}
+
+	/**
+	 * Delete the account
+	 *
+	 * @return DataResponse<Http::STATUS_NO_CONTENT, null, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_INTERNAL_SERVER_ERROR, array{message: string}, array{}>
+	 *
+	 * 204: Account deleted successfully
+	 * 400: Deleting account is not possible
+	 */
+	#[ApiRoute(verb: 'DELETE', url: '/api/{apiVersion}/hostedsignalingserver/delete', requirements: [
+		'apiVersion' => '(v1)',
+	])]
+	public function deleteAccount(): DataResponse {
+		$accountId = $this->config->getAppValue('spreed', 'hosted-signaling-server-account-id');
+
+		if ($accountId === null) {
+			return new DataResponse(['message' => $this->l10n->t('No account available to delete.')], Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$this->hostedSignalingServerService->deleteAccount(new AccountId($accountId));
+		} catch (HostedSignalingServerAPIException $e) {
+			if ($e->getCode() === Http::STATUS_NOT_FOUND) {
+				// Account was deleted, so remove the information locally
+			} else {
+				// API or connection issues - do nothing and just try again later
+				return new DataResponse(['message' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
+		}
+
+		$this->config->deleteAppValue('spreed', 'hosted-signaling-server-account');
+		$this->config->deleteAppValue('spreed', 'hosted-signaling-server-account-id');
+
+		// remove signaling servers if account is not active anymore
+		$this->config->deleteAppValue('spreed', 'signaling_mode');
+		$this->config->deleteAppValue('spreed', 'signaling_servers');
+
+		$this->logger->info('Deleted hosted signaling server account with ID ' . $accountId);
+
+		return new DataResponse(null, Http::STATUS_NO_CONTENT);
+	}
+}

@@ -1,0 +1,24 @@
+OC.L10N.register(
+    "serverinfo",
+    {
+    "System" : "ระบบ",
+    "Unknown" : "ไม่ทราบ",
+    "Active users" : "ผู้ใช้ที่ใช้งานอยู่",
+    "Mode" : "โหมด",
+    "Never" : "ไม่เคย",
+    "Type:" : "ชนิด:",
+    "Size:" : "ขนาด:",
+    "Status" : "สถานะ",
+    "Details" : "รายละเอียด",
+    "Authentication" : "การตรวจสอบสิทธิ์",
+    "Hostname" : "ชื่อโฮสต์",
+    "seconds" : "วินาที",
+    "Shares" : "การแชร์",
+    "Warning" : "คำเตือน",
+    "Copied!" : "คัดลอกแล้ว!",
+    "Not supported!" : "ไม่สนับสนุน",
+    "Press ⌘-C to copy." : "กด ⌘-C เพื่อคัดลอก",
+    "Press Ctrl-C to copy." : "กด Ctrl-C เพื่อคัดลอก",
+    "Copy" : "คัดลอก"
+},
+"nplurals=1; plural=0;");

@@ -1,0 +1,148 @@
+<!--
+  - SPDX-FileCopyrightText: 2022 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
+and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## [10.5.0] - 2026-08-13
+
+### Changes
+
+* Add Nextcloud 35 support
+* Fix deprecated InvalidArgumentException
+* Dependency bumps
+
+## [10.4.0] - 2026-06-29
+
+### Changes
+
+* Cancel queued import by disabled users
+* Dependency bumps
+
+## [10.3.0] - 2026-05-04
+
+### Changes
+
+* Add Nextcloud 34 support
+
+## [10.2.0] - 2026-03-31
+
+### Changes
+
+* Cast key to string when retrieving value type by @yukogan-gh in https://github.com/nextcloud/user_migration/pull/1064
+* Restrict tag creation by @come-nc in https://github.com/nextcloud/user_migration/pull/1073
+* fix: Add an allowlist for app settings by @come-nc in https://github.com/nextcloud/user_migration/pull/1072
+* fix: Fix importing a user as a new one from occ by @come-nc in https://github.com/nextcloud/user_migration/pull/1054
+* Dependency bumps
+* docs: add samin-z as owner by @blizzz in https://github.com/nextcloud/user_migration/pull/1065
+
+## [10.1.0] - 2026-02-05
+
+### Changes
+
+* Fix settings import when a setting is typed (fix support for Nextcloud >= 32)
+
+## [10.0.0] - 2026-01-19
+
+### Changes
+
+* Add Nextcloud 33 support
+* Support Nextcloud 29 and newer
+* Add option to disable user before export from occ
+* Add user_migration:manage command and last export date
+* Dependency bumps
+
+## [9.0.0] - 2025-08-21
+
+### Changes
+
+* Add Nextcloud 32 support
+* Abort early if file does not exist
+* Fix fileid type in notification rich object
+* Dependency bumps
+
+## [8.0.0] - 2025-05-26
+
+### Changes
+
+* Nextcloud 31 compatibility
+* Move into migration settings section
+* Dependency bumps
+
+## [7.0.1] - 2024-08-22
+
+### Changes
+
+* Fix failed release
+
+## [7.0.0] - 2024-08-22
+
+### Breaking
+
+* Drop support for Nextcloud 29
+
+### Changes
+
+* Nextcloud 30 compatibility
+* Dependency bumps
+
+## [6.0.0] - 2024-03-28
+
+### Breaking
+
+* Drop support for Nextcloud 28
+
+### Changes
+
+* Nextcloud 29 compatibility
+* Add unit tests https://github.com/nextcloud/user_migration/pull/250
+* Avoid crashes in Notifier when user or file is not found https://github.com/nextcloud/user_migration/pull/608
+* Fix hidden password confirmation dialog with new global search https://github.com/nextcloud/user_migration/pull/550
+* Dependency bumps
+
+## [5.0.0] - 2023-12-01
+
+### Breaking
+
+* Drop support for Nextcloud 27
+
+### Changes
+
+* Nextcloud 28 compatibility
+* Remove deprecated ${var} syntax https://github.com/nextcloud/user_migration/pull/519
+* Fix hidden password confirmation dialog with new global search https://github.com/nextcloud/user_migration/pull/551
+* Various dependencies bump
+
+## [4.0.1] - 2023-05-17
+
+### Breaking
+
+* Drop support for Nextcloud 25 + 26
+
+### Changes
+
+* Nextcloud 27 compatibility
+* Improved 32bit compatibility https://github.com/nextcloud/user_migration/pull/408
+* CLI command exports directly to final folder instead of a temporary folder https://github.com/nextcloud/user_migration/pull/402
+* Various dependencies bump
+
+## [4.0.0] - 2023-05-16
+
+* Nextcloud 27 compatibility
+* Improved 32bit compatibility https://github.com/nextcloud/user_migration/pull/408
+* CLI command exports directly to final folder instead of a temporary folder https://github.com/nextcloud/user_migration/pull/402
+* Various dependencies bump
+
+## [3.0.0] - 2023-03-03
+
+* Use file picker with filter from dialogs package https://github.com/nextcloud/user_migration/pull/369
+* Improve verbose output when an exception happens https://github.com/nextcloud/user_migration/pull/364
+* Apply node filter for comments and tags as well https://github.com/nextcloud/user_migration/pull/354
+* Fix type error in debug mode when an Exception is thrown https://github.com/nextcloud/user_migration/pull/353
+* Disable cancel button while cancelling https://github.com/nextcloud/user_migration/pull/358
+* Various dependencies bump

@@ -1,0 +1,2303 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "spreed-administration",
+        "version": "0.0.1",
+        "description": "Chat, video & audio-conferencing using WebRTC",
+        "license": {
+            "name": "agpl"
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "basic_auth": {
+                "type": "http",
+                "scheme": "basic"
+            },
+            "bearer_auth": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "Bot": {
+                "type": "object",
+                "required": [
+                    "description",
+                    "id",
+                    "name",
+                    "state"
+                ],
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "A longer description of the bot helping moderators to decide if they want to enable this bot"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Unique numeric identifier of the bot on this server"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Display name of the bot shown as author when it posts a message or reaction"
+                    },
+                    "state": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "One of the [Bot states](https://nextcloud-talk.readthedocs.io/en/latest/constants#bot-states)"
+                    }
+                }
+            },
+            "BotWithDetails": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Bot"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "error_count",
+                            "features",
+                            "last_error_date",
+                            "last_error_message",
+                            "url",
+                            "url_hash"
+                        ],
+                        "properties": {
+                            "error_count": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Number of consecutive errors"
+                            },
+                            "features": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Feature flags for the bot (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#bot-features))"
+                            },
+                            "last_error_date": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "UNIX timestamp of the last error"
+                            },
+                            "last_error_message": {
+                                "type": "string",
+                                "description": "The last exception message or error response information when trying to reach the bot"
+                            },
+                            "url": {
+                                "type": "string",
+                                "description": "URL endpoint that is triggered by this bot"
+                            },
+                            "url_hash": {
+                                "type": "string",
+                                "description": "Hash of the URL prefixed with `bot-` serves as `actorId`"
+                            }
+                        }
+                    }
+                ]
+            },
+            "Capabilities": {
+                "type": "object",
+                "required": [
+                    "features",
+                    "features-local",
+                    "config",
+                    "config-local",
+                    "version"
+                ],
+                "properties": {
+                    "features": {
+                        "type": "array",
+                        "description": "List of features available on the server",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1
+                    },
+                    "features-local": {
+                        "type": "array",
+                        "description": "List of features only available locally (not for federated conversations)",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1
+                    },
+                    "config": {
+                        "type": "object",
+                        "required": [
+                            "attachments",
+                            "call",
+                            "chat",
+                            "conversations",
+                            "federation",
+                            "previews",
+                            "signaling",
+                            "experiments",
+                            "feature-hints",
+                            "permissions"
+                        ],
+                        "properties": {
+                            "attachments": {
+                                "type": "object",
+                                "required": [
+                                    "allowed",
+                                    "conversation-subfolders"
+                                ],
+                                "properties": {
+                                    "allowed": {
+                                        "type": "boolean",
+                                        "description": "Whether file sharing is allowed in conversations"
+                                    },
+                                    "folder": {
+                                        "type": "string",
+                                        "description": "User's attachment folder (only available for logged in users)"
+                                    },
+                                    "conversation-subfolders": {
+                                        "type": "boolean",
+                                        "description": "Whether per-conversation subfolders are used for attachments"
+                                    }
+                                }
+                            },
+                            "call": {
+                                "type": "object",
+                                "required": [
+                                    "enabled",
+                                    "breakout-rooms",
+                                    "recording",
+                                    "recording-consent",
+                                    "supported-reactions",
+                                    "predefined-backgrounds",
+                                    "predefined-backgrounds-v2",
+                                    "can-upload-background",
+                                    "sip-enabled",
+                                    "sip-dialout-enabled",
+                                    "default-phone-region",
+                                    "can-enable-sip",
+                                    "start-without-media",
+                                    "max-duration",
+                                    "blur-virtual-background",
+                                    "end-to-end-encryption",
+                                    "live-transcription",
+                                    "live-translation",
+                                    "live-transcription-target-language-id",
+                                    "play-sounds",
+                                    "grid-limit",
+                                    "grid-limit-enforced"
+                                ],
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether calls are enabled"
+                                    },
+                                    "breakout-rooms": {
+                                        "type": "boolean",
+                                        "description": "Whether breakout rooms are enabled"
+                                    },
+                                    "recording": {
+                                        "type": "boolean",
+                                        "description": "Whether call recording is enabled"
+                                    },
+                                    "recording-consent": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Whether recording consent is required (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#recording-consent-required))"
+                                    },
+                                    "supported-reactions": {
+                                        "type": "array",
+                                        "description": "List of supported reaction emojis during calls",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "predefined-backgrounds": {
+                                        "type": "array",
+                                        "description": "List of file names relative to the spreed/img/backgrounds/ web path, e.g. `2_home.jpg`",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "predefined-backgrounds-v2": {
+                                        "type": "array",
+                                        "description": "List of file paths relative to the server web root with leading slash, e.g. `/apps/spreed/img/backgrounds/2_home.jpg`",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "can-upload-background": {
+                                        "type": "boolean",
+                                        "description": "Whether the user can upload custom virtual backgrounds"
+                                    },
+                                    "sip-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether SIP is enabled on the server"
+                                    },
+                                    "sip-dialout-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether SIP dial-out is enabled on the server"
+                                    },
+                                    "default-phone-region": {
+                                        "type": "string",
+                                        "description": "Default phone region of the server"
+                                    },
+                                    "can-enable-sip": {
+                                        "type": "boolean",
+                                        "description": "Whether the user can enable SIP for conversations"
+                                    },
+                                    "start-without-media": {
+                                        "type": "boolean",
+                                        "description": "Whether calls start without media by default"
+                                    },
+                                    "max-duration": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum duration of a call in seconds, `0` means unlimited"
+                                    },
+                                    "blur-virtual-background": {
+                                        "type": "boolean",
+                                        "description": "Whether the blur virtual background is available"
+                                    },
+                                    "end-to-end-encryption": {
+                                        "type": "boolean",
+                                        "description": "Whether end-to-end encryption is available"
+                                    },
+                                    "live-transcription": {
+                                        "type": "boolean",
+                                        "description": "Whether live transcription is available"
+                                    },
+                                    "live-translation": {
+                                        "type": "boolean",
+                                        "description": "Whether live translation is available"
+                                    },
+                                    "live-transcription-target-language-id": {
+                                        "type": "string",
+                                        "description": "The default target language for live transcription"
+                                    },
+                                    "play-sounds": {
+                                        "type": "boolean",
+                                        "description": "Whether to play sounds for call events"
+                                    },
+                                    "grid-limit": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum number of participants shown in the grid view"
+                                    },
+                                    "grid-limit-enforced": {
+                                        "type": "boolean",
+                                        "description": "Whether the grid limit is enforced by the server"
+                                    },
+                                    "external-call-service": {
+                                        "type": "string",
+                                        "description": "URL of an external call service if one is used"
+                                    }
+                                }
+                            },
+                            "chat": {
+                                "type": "object",
+                                "required": [
+                                    "max-length",
+                                    "read-privacy",
+                                    "has-translation-providers",
+                                    "has-translation-task-providers",
+                                    "typing-privacy",
+                                    "summary-threshold",
+                                    "style",
+                                    "matterbridge-enabled"
+                                ],
+                                "properties": {
+                                    "max-length": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum length of a chat message"
+                                    },
+                                    "read-privacy": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Read privacy setting for the user (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#participant-read-status-privacy))"
+                                    },
+                                    "has-translation-providers": {
+                                        "type": "boolean",
+                                        "description": "Whether translation providers are available"
+                                    },
+                                    "has-translation-task-providers": {
+                                        "type": "boolean",
+                                        "description": "Whether translation task providers are available"
+                                    },
+                                    "typing-privacy": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Typing privacy setting for the user (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#participant-typing-privacy))"
+                                    },
+                                    "summary-threshold": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Minimum number of chat messages before a summary can be generated",
+                                        "minimum": 1
+                                    },
+                                    "style": {
+                                        "type": "string",
+                                        "enum": [
+                                            "split",
+                                            "unified"
+                                        ],
+                                        "description": "Chat message rendering style (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#chat-style))"
+                                    },
+                                    "matterbridge-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether Matterbridge is enabled"
+                                    }
+                                }
+                            },
+                            "conversations": {
+                                "type": "object",
+                                "required": [
+                                    "can-create",
+                                    "force-passwords",
+                                    "list-style",
+                                    "description-length",
+                                    "retention-event",
+                                    "retention-phone",
+                                    "retention-instant-meetings",
+                                    "sort-order",
+                                    "group-mode"
+                                ],
+                                "properties": {
+                                    "can-create": {
+                                        "type": "boolean",
+                                        "description": "Whether the user can create conversations"
+                                    },
+                                    "force-passwords": {
+                                        "type": "boolean",
+                                        "description": "Whether passwords are enforced for public conversations"
+                                    },
+                                    "list-style": {
+                                        "type": "string",
+                                        "enum": [
+                                            "two-lines",
+                                            "compact"
+                                        ],
+                                        "description": "Conversation list style (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#conversation-list-style))"
+                                    },
+                                    "description-length": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum length of a conversation description",
+                                        "minimum": 1
+                                    },
+                                    "retention-event": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Retention period for event conversations in seconds, `0` means no retention",
+                                        "minimum": 0
+                                    },
+                                    "retention-phone": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Retention period for phone conversations in seconds, `0` means no retention",
+                                        "minimum": 0
+                                    },
+                                    "retention-instant-meetings": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Retention period for instant meetings in seconds, `0` means no retention",
+                                        "minimum": 0
+                                    },
+                                    "sort-order": {
+                                        "type": "string",
+                                        "enum": [
+                                            "activity",
+                                            "alphabetical"
+                                        ],
+                                        "description": "User selected sort order for conversations (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#conversations-sort-options))"
+                                    },
+                                    "group-mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "none",
+                                            "group-first",
+                                            "private-first"
+                                        ],
+                                        "description": "User selected grouping mode for conversations (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#conversations-group-mode))"
+                                    }
+                                }
+                            },
+                            "federation": {
+                                "type": "object",
+                                "required": [
+                                    "enabled",
+                                    "incoming-enabled",
+                                    "outgoing-enabled",
+                                    "only-trusted-servers"
+                                ],
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether federation is enabled"
+                                    },
+                                    "incoming-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether incoming federation is enabled"
+                                    },
+                                    "outgoing-enabled": {
+                                        "type": "boolean",
+                                        "description": "Whether outgoing federation is enabled"
+                                    },
+                                    "only-trusted-servers": {
+                                        "type": "boolean",
+                                        "description": "Whether only trusted servers are allowed for federation"
+                                    }
+                                }
+                            },
+                            "previews": {
+                                "type": "object",
+                                "required": [
+                                    "max-gif-size"
+                                ],
+                                "properties": {
+                                    "max-gif-size": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum GIF file size in bytes for previews"
+                                    }
+                                }
+                            },
+                            "signaling": {
+                                "type": "object",
+                                "required": [
+                                    "session-ping-limit",
+                                    "mode"
+                                ],
+                                "properties": {
+                                    "session-ping-limit": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum number of sessions that can be pinged in a single request"
+                                    },
+                                    "mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "internal",
+                                            "external",
+                                            "conversation_cluster"
+                                        ],
+                                        "description": "Signaling mode (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#signaling-modes))"
+                                    },
+                                    "hello-v2-token-key": {
+                                        "type": "string",
+                                        "description": "Public key for hello v2 authentication"
+                                    }
+                                }
+                            },
+                            "experiments": {
+                                "type": "object",
+                                "required": [
+                                    "enabled"
+                                ],
+                                "properties": {
+                                    "enabled": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Bit-flag of enabled experiments",
+                                        "minimum": 0
+                                    }
+                                }
+                            },
+                            "feature-hints": {
+                                "type": "object",
+                                "required": [
+                                    "current",
+                                    "hidden"
+                                ],
+                                "properties": {
+                                    "current": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "minimum": 1
+                                    },
+                                    "hidden": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "minimum": 0
+                                    }
+                                }
+                            },
+                            "permissions": {
+                                "type": "object",
+                                "required": [
+                                    "max-default",
+                                    "max-custom",
+                                    "default"
+                                ],
+                                "properties": {
+                                    "max-default": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum default permissions (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#attendee-permissions))"
+                                    },
+                                    "max-custom": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Maximum custom permissions (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#attendee-permissions))"
+                                    },
+                                    "default": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "description": "Server default permissions (see [constants list](https://nextcloud-talk.readthedocs.io/en/latest/constants#attendee-permissions))"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "config-local": {
+                        "type": "object",
+                        "description": "Map of config keys that are only available locally (not for federated conversations)",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "version": {
+                        "type": "string",
+                        "description": "Version of the Talk app"
+                    }
+                }
+            },
+            "OCSMeta": {
+                "type": "object",
+                "required": [
+                    "status",
+                    "statuscode"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "statuscode": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "totalitems": {
+                        "type": "string"
+                    },
+                    "itemsperpage": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PublicCapabilities": {
+                "type": "object",
+                "properties": {
+                    "spreed": {
+                        "$ref": "#/components/schemas/Capabilities"
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/bot/admin": {
+            "get": {
+                "operationId": "bot-admin-list-bots",
+                "summary": "List admin bots",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "settings"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1"
+                            ],
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bot list returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/BotWithDetails"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/certificate/expiration": {
+            "get": {
+                "operationId": "certificate-get-certificate-expiration",
+                "summary": "Get the certificate expiration for a host",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "settings"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1"
+                            ],
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "host",
+                        "in": "query",
+                        "description": "Host to check",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Certificate expiration returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "expiration_in_days"
+                                                    ],
+                                                    "properties": {
+                                                        "expiration_in_days": {
+                                                            "type": "integer",
+                                                            "format": "int64",
+                                                            "nullable": true
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Getting certificate expiration is not possible",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/hostedsignalingserver/requesttrial": {
+            "post": {
+                "operationId": "hosted_signaling_server-request-trial",
+                "summary": "Request a trial account",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "hosted_signaling_server"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "url",
+                                    "name",
+                                    "email",
+                                    "language",
+                                    "country"
+                                ],
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "description": "Server URL"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Display name of the user"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "description": "Email of the user"
+                                    },
+                                    "language": {
+                                        "type": "string",
+                                        "description": "Language of the user"
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "description": "Country of the user"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1"
+                            ],
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trial requested successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Requesting trial is not possible",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/hostedsignalingserver/delete": {
+            "delete": {
+                "operationId": "hosted_signaling_server-delete-account",
+                "summary": "Delete the account",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "hosted_signaling_server"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1"
+                            ],
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Account deleted successfully"
+                    },
+                    "400": {
+                        "description": "Deleting account is not possible",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "message"
+                                                    ],
+                                                    "properties": {
+                                                        "message": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/bridge/version": {
+            "get": {
+                "operationId": "matterbridge_settings-get-matterbridge-version",
+                "summary": "Get Matterbridge version",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "matterbridge"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1"
+                            ],
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bridge version returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "version"
+                                                    ],
+                                                    "properties": {
+                                                        "version": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Getting bridge version is not possible",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/bridge": {
+            "delete": {
+                "operationId": "matterbridge_settings-stop-all-bridges",
+                "summary": "Stop all bridges",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "matterbridge"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1"
+                            ],
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "All bridges stopped successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "boolean"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "406": {
+                        "description": "Stopping all bridges is not possible",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/recording/welcome/{serverId}": {
+            "get": {
+                "operationId": "recording-get-welcome-message",
+                "summary": "Get the welcome message of a recording server",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "settings"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1"
+                            ],
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "serverId",
+                        "in": "path",
+                        "description": "ID of the server",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Welcome message returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "version"
+                                                    ],
+                                                    "properties": {
+                                                        "version": {
+                                                            "type": "number",
+                                                            "format": "double"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recording server not found or not configured",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "nullable": true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/settings/sip": {
+            "post": {
+                "operationId": "settings-setsip-settings",
+                "summary": "Update SIP bridge settings",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "settings"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "sipGroups": {
+                                        "type": "array",
+                                        "default": [],
+                                        "description": "New SIP groups",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "dialInInfo": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "New dial info"
+                                    },
+                                    "sharedSecret": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "New shared secret"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v1"
+                            ],
+                            "default": "v1"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully set new SIP settings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "nullable": true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/spreed/api/{apiVersion}/signaling/welcome/{serverId}": {
+            "get": {
+                "operationId": "signaling-get-welcome-message",
+                "summary": "Get the welcome message from a signaling server",
+                "description": "Only available for logged-in users because guests can not use the apps right now.\nThis endpoint requires admin access",
+                "tags": [
+                    "settings"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "v3"
+                            ],
+                            "default": "v3"
+                        }
+                    },
+                    {
+                        "name": "serverId",
+                        "in": "path",
+                        "description": "ID of the signaling server",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Welcome message returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "version"
+                                                    ],
+                                                    "properties": {
+                                                        "version": {
+                                                            "type": "string"
+                                                        },
+                                                        "warning": {
+                                                            "type": "string"
+                                                        },
+                                                        "features": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "minItems": 1
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Signaling server not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "nullable": true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": []
+}

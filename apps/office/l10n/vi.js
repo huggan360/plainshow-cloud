@@ -1,0 +1,19 @@
+OC.L10N.register(
+    "office",
+    {
+    "Office" : "Văn phòng",
+    "Create new" : "Tạo mới",
+    "Blank" : "Trống",
+    "Search {category}" : "Tìm kiếm {category}",
+    "Search" : "Tìm kiếm",
+    "All" : "Tất cả",
+    "Switch to grid view" : "Chuyển sang chế độ xem dạng lưới",
+    "Switch to list view" : "Chuyển sang chế độ xem danh sách",
+    "Create" : "Tạo",
+    "Filename" : "Tên tập tin",
+    "Documents" : "Tài liệu",
+    "Spreadsheets" : "Bảng tính",
+    "Presentations" : "Bản trình chiếu",
+    "Filename cannot be empty" : "Tên tập tin không thể trống"
+},
+"nplurals=1; plural=0;");

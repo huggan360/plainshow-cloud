@@ -1,0 +1,9 @@
+{ "translations": {
+    "Files" : "ຟາຍ",
+    "Data migration" : "ການຍ້າຍຂໍ້ມູນ",
+    "Export" : "Export",
+    "Cancel" : "ຍົກເລີກ",
+    "Close" : "ປິດ",
+    "Import" : "Import"
+},"pluralForm" :"nplurals=1; plural=0;"
+}
