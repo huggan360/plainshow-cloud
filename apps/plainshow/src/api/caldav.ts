@@ -115,6 +115,7 @@ function fromIcal(time: ICAL.Time): Date {
 
 function toIcal(date: Date, allDay: boolean, zone?: ICAL.Timezone | null): ICAL.Time {
     if (allDay) return ICAL.Time.fromDateString(dayKey(date));
+    if (zone?.tzid === 'floating') return ICAL.Time.fromJSDate(date, false);
     const value = ICAL.Time.fromJSDate(date, true);
     return zone && zone.tzid !== 'UTC' ? value.convertToZone(zone) : value;
 }
@@ -258,12 +259,12 @@ export type Draft = {
 
 const master = (vcal: ICAL.Component) => vcal.getAllSubcomponents('vevent').find((v) => !v.getFirstPropertyValue('recurrence-id')) ?? vcal.getFirstSubcomponent('vevent')!;
 
-function apply(vevent: ICAL.Component, draft: Draft, zone: ICAL.Timezone | null) {
+function apply(vevent: ICAL.Component, draft: Draft, zone: ICAL.Timezone | null, previous?: Draft) {
     const set = (name: string, value: string | ICAL.Time | null) => {
         vevent.removeAllProperties(name);
         if (value === null || value === '') return;
         const property = vevent.addPropertyWithValue(name, value);
-        if (value instanceof ICAL.Time && !value.isDate && zone && zone.tzid !== 'UTC' && (name === 'dtstart' || name === 'dtend')) property.setParameter('tzid', zone.tzid);
+        if (value instanceof ICAL.Time && !value.isDate && zone && !['UTC', 'floating'].includes(zone.tzid) && (name === 'dtstart' || name === 'dtend')) property.setParameter('tzid', zone.tzid);
     };
     set('summary', draft.title.trim() || 'New event');
     set('location', draft.location.trim());
@@ -284,8 +285,9 @@ function apply(vevent: ICAL.Component, draft: Draft, zone: ICAL.Timezone | null)
             vevent.addPropertyWithValue('rrule', new ICAL.Recur(rule as never));
         }
     }
-    vevent.getAllSubcomponents('valarm').forEach((alarm) => vevent.removeSubcomponent(alarm));
-    if (draft.reminder !== null) {
+    const reminderChanged = !previous || previous.reminder !== draft.reminder;
+    if (reminderChanged) vevent.getAllSubcomponents('valarm').forEach((alarm) => vevent.removeSubcomponent(alarm));
+    if (reminderChanged && draft.reminder !== null) {
         const alarm = new ICAL.Component('valarm');
         alarm.addPropertyWithValue('action', 'DISPLAY');
         alarm.addPropertyWithValue('description', draft.title.trim() || 'Reminder');
@@ -344,7 +346,8 @@ export async function updateEvent(href: string, etag: string, ics: string, draft
     const vevent = master(vcal);
     const before = new ICAL.Event(vevent);
     const moved = fromIcal(before.startDate).getTime() !== draft.start.getTime() || before.startDate.isDate !== draft.allDay;
-    apply(vevent, draft, draft.allDay ? null : zoneOf(vcal));
+    const zone = before.startDate.isDate ? zoneOf(vcal) : before.startDate.zone;
+    apply(vevent, draft, draft.allDay ? null : zone, draftOf(ics));
     // Repeats moved one by one belong to the old dates; when the series moves or stops repeating, they go.
     if (draft.repeat === 'none' || moved) {
         vcal.getAllSubcomponents('vevent').filter((v) => v !== vevent).forEach((v) => vcal.removeSubcomponent(v));

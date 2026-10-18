@@ -28,10 +28,14 @@ const PROPS = `<d:prop>
     <nc:has-preview/><nc:metadata-photos-original_date_time/>
 </d:prop>`;
 
-export const filesRoot = () => `/remote.php/dav/files/${encodeURIComponent(boot.user.id)}`;
+/** Your files, or on a share link's page, what the link shares. */
+export const filesRoot = () => (boot.public ? `/public.php/dav/files/${encodeURIComponent(boot.public.token)}` : `/remote.php/dav/files/${encodeURIComponent(boot.user.id)}`);
 
 export function davPath(path: string): string {
-    return filesRoot() + '/' + path.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+    const inside = path.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+    // A link to one file: the file is the root itself.
+    if (!inside && boot.public && !boot.public.folder) return filesRoot();
+    return filesRoot() + '/' + inside;
 }
 
 function text(node: Element, ns: string, name: string): string {
@@ -151,7 +155,10 @@ export function fileUrl(path: string): string {
     return boot.webroot + davPath(path);
 }
 
-export function previewUrl(entry: Pick<Entry, 'id' | 'etag'>, size = 256, crop = true): string {
+export function previewUrl(entry: Pick<Entry, 'id' | 'etag'> & { path?: string }, size = 256, crop = true): string {
+    if (boot.public) {
+        return `${boot.webroot}/index.php/apps/files_sharing/publicpreview/${encodeURIComponent(boot.public.token)}?file=${encodeURIComponent('/' + (entry.path ?? ''))}&x=${size}&y=${size}&a=${crop ? 0 : 1}&c=${encodeURIComponent(entry.etag)}`;
+    }
     return `${boot.webroot}/index.php/core/preview?fileId=${entry.id}&x=${size}&y=${size}&a=${crop ? 0 : 1}&forceIcon=0&c=${encodeURIComponent(entry.etag)}`;
 }
 
@@ -182,7 +189,8 @@ function put(url: string, body: Blob, headers: Record<string, string>, onProgres
 /** Upload a file; big ones go in 10 MB pieces that Cloud puts together at the end. */
 export async function upload(path: string, file: File, onProgress?: Progress): Promise<void> {
     const mtime = String(Math.floor(file.lastModified / 1000));
-    if (file.size <= CHUNK) {
+    // Links have no upload folder of their own, so files go up whole.
+    if (file.size <= CHUNK || boot.public) {
         await put(davPath(path), file, { 'X-OC-Mtime': mtime }, (sent) => onProgress?.(sent, file.size));
         onProgress?.(file.size, file.size);
         return;

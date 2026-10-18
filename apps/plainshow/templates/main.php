@@ -10,7 +10,10 @@ $nonce = \OC::$server->get(\OC\Security\CSP\ContentSecurityPolicyNonceManager::c
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="dark light">
     <meta name="theme-color" content="#151515">
-    <title>Cloud | PlainShow</title>
+    <title><?php p($_['title']); ?></title>
+<?php foreach ($_['meta'] as $property => $content): ?>
+    <meta property="<?php p($property); ?>" content="<?php p($content); ?>">
+<?php endforeach; ?>
     <link rel="icon" href="<?php p($base); ?>/ui/brand/favicon.ico?v=<?php p($v); ?>" sizes="any">
     <link rel="apple-touch-icon" href="<?php p($base); ?>/ui/brand/apple-touch-icon.png?v=<?php p($v); ?>">
     <link rel="preload" href="<?php p($base); ?>/ui/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin>

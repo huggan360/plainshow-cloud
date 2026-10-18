@@ -44,7 +44,7 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
         headers.set('Content-Type', 'application/json');
         body = JSON.stringify(init.json);
     }
-    const response = await request(boot.base.replace(boot.webroot, '') + path, { ...init, headers, body });
+    const response = await request(boot.apiBase.slice(boot.webroot.length) + path, { ...init, headers, body });
     const data = await response.json().catch(() => null);
     if (!response.ok) throw new CloudError(data?.message || `Cloud answered ${response.status}.`, response.status);
     return data as T;

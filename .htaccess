@@ -90,6 +90,13 @@
 <IfModule mod_rewrite.c>
     RewriteEngine on
 
+    RewriteCond %{DOCUMENT_ROOT}/.plainshow-switching -f
+    RewriteRule ^ - [R=503,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(?:files|recent|favorites|shared|trash|photos|calendar|settings|s|f|apps/(?:plainshow|files|calendar|photos|dashboard))(?:/.*)?$ index.php [QSA,L]
+
 ##
 ## Rule: Workaround for WebDAV with apache+php-cgi
 ##
@@ -138,7 +145,7 @@
 ## Rule: Prevent access to non-public files
 ##
 
-    RewriteRule ^(?:build|tests|config|lib|3rdparty|templates)/.* - [R=404,L]
+    RewriteRule ^(?:build|tests|config|lib|3rdparty|templates|ops)/.* - [R=404,L]
 
 ##
 ## Rule: Maps most RFC 8615 compliant well-known URIs to our main frontend controller (/index.php) by default

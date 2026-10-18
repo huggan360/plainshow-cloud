@@ -9,6 +9,7 @@ use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\PlainShow\Listener\TakenDate;
+use OCA\PlainShow\Share\PublicPage;
 use OCP\FilesMetadata\Event\MetadataBackgroundEvent;
 use OCP\FilesMetadata\Event\MetadataLiveEvent;
 
@@ -28,6 +29,8 @@ class Application extends App implements IBootstrap {
         // When photos were taken, for the timeline.
         $context->registerEventListener(MetadataLiveEvent::class, TakenDate::class);
         $context->registerEventListener(MetadataBackgroundEvent::class, TakenDate::class);
+        // Share links open in Cloud's own page.
+        $context->registerPublicShareTemplateProvider(PublicPage::class);
     }
 
     public function boot(IBootContext $context): void {

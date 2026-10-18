@@ -329,3 +329,37 @@
 .ps-chain + .cloud-subhead { margin-top: 16px; }
 @media (max-width: 900px) { .cloud-settings__grid { grid-template-columns: 1fr; } }
 .cloud-settings__grid .ps-frame__head { margin-bottom: 14px; }
+
+/* Share link page */
+.cloud-public { display: flex; flex-direction: column; min-height: 100vh; }
+.cloud-public__bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 12px max(16px, calc((100vw - 1180px) / 2)); border-bottom: 1px solid var(--ps-line); background: color-mix(in srgb, var(--ps-bg) 82%, transparent); backdrop-filter: blur(12px); }
+.cloud-public__main { flex: 1; width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 16px 48px; }
+.cloud-public__title { overflow-wrap: anywhere; }
+.cloud-public__note { margin-bottom: 16px; }
+.cloud-public__note p { margin: 0; white-space: pre-wrap; }
+.cloud-public__file { overflow: hidden; }
+.cloud-public__stage { display: grid; place-items: center; min-height: 240px; max-height: 72vh; background: var(--ps-bg); overflow: hidden; }
+.cloud-public__stage img, .cloud-public__stage video { display: block; max-width: 100%; max-height: 72vh; object-fit: contain; }
+.cloud-public__stage iframe { width: 100%; height: 72vh; border: 0; background: #fff; }
+.cloud-public__stage--text, .cloud-public__stage--code { place-items: stretch; overflow: auto; }
+.cloud-public__text { margin: 0; padding: 18px 20px; color: var(--ps-text); font: var(--ps-text-sm)/1.6 var(--ps-font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.cloud-public__big { display: grid; place-items: center; padding: 48px; font-size: 5rem; }
+.cloud-public__filebar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--ps-line); }
+.cloud-public__fileinfo { display: grid; flex: 1; min-width: 0; }
+.cloud-public__fileinfo strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cloud-public__uploads { margin-bottom: 12px; }
+.cloud-public__upload { display: flex; justify-content: space-between; gap: 12px; font: var(--ps-text-sm) var(--ps-font-ui); }
+.cloud-public .ps-frame.is-drop { box-shadow: 0 0 0 2px var(--ps-accent); }
+.cloud-public__drop { display: grid; justify-items: center; gap: 6px; padding: 40px 16px; border: 2px dashed var(--ps-line); border-radius: 14px; text-align: center; }
+.cloud-public__drop.is-drop { border-color: var(--ps-accent); background: var(--ps-accent-bg); }
+.cloud-public__drop > .bx { font-size: 3.4rem; color: var(--ps-accent); }
+.cloud-public__drop p { margin: 0; }
+.cloud-public__drop .ps-btn { margin-top: 10px; }
+.cloud-public__foot { padding: 18px 16px 28px; text-align: center; }
+.cloud-public__foot a { color: inherit; }
+.cloud-ok { color: var(--ps-green); }
+@media (max-width: 640px) {
+    .cloud-public__main { padding-top: 18px; }
+    .cloud-public .cloud-col-date { display: none; }
+    .cloud-public__filebar { flex-wrap: wrap; }
+}

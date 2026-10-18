@@ -21,7 +21,7 @@ export default function Photos({ path }: { path: string }) {
 
 const monthLabel = (month: string) => new Date(month + '-01T12:00:00').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 const monthOf = (ms: number) => new Date(ms).toISOString().slice(0, 7);
-const albumUrl = (album: number, photo: number, size = 0) => `${boot.base}/api/web/albums/${album}/photos/${photo}${size ? `?size=${size}` : ''}`;
+const albumUrl = (album: number, photo: number, size = 0) => `${boot.apiBase}/api/web/albums/${album}/photos/${photo}${size ? `?size=${size}` : ''}`;
 
 /** Every photo and video you own, newest first, month by month. */
 function Timeline() {

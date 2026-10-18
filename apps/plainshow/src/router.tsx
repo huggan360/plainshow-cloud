@@ -3,19 +3,25 @@ import { boot } from './boot';
 
 /** Addresses inside Cloud, without the app's base: "/", "/photos", "/files/Documents". */
 export function currentPath(): string {
-    const path = decodeURI(window.location.pathname);
+    let path = window.location.pathname;
+    try { path = decodeURIComponent(path); } catch {}
     const inside = path.startsWith(boot.base) ? path.slice(boot.base.length) : path;
     return inside === '' ? '/' : inside;
 }
 
 export function href(path: string): string {
-    return boot.base + encodeURI(path === '/' ? '/' : path);
+    return boot.base + path;
+}
+
+export function fileRoute(path: string, open?: string): string {
+    const inside = path.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+    return '/files' + (inside ? '/' + inside : '') + (open ? '?open=' + encodeURIComponent(open) : '');
 }
 
 const listeners = new Set<() => void>();
 
 export function navigate(path: string, replace = false) {
-    const target = href(path) + (path.includes('?') ? '' : '');
+    const target = href(path);
     if (replace) window.history.replaceState(null, '', target);
     else window.history.pushState(null, '', target);
     listeners.forEach((listener) => listener());

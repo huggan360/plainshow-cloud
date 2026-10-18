@@ -91,7 +91,8 @@ class ShareController extends AuthPublicShareController {
 
 		$this->eventDispatcher->dispatchTyped(new BeforeTemplateRenderedEvent($this->share, BeforeTemplateRenderedEvent::SCOPE_PUBLIC_SHARE_AUTH));
 
-		return new TemplateResponse('core', 'publicshareauth', $templateParameters, 'guest');
+		// PlainShow Cloud's own page for the password step.
+		return new TemplateResponse('plainshow', 'shareauth', $templateParameters, TemplateResponse::RENDER_AS_BLANK);
 	}
 
 	/**
@@ -103,7 +104,8 @@ class ShareController extends AuthPublicShareController {
 
 		$this->eventDispatcher->dispatchTyped(new BeforeTemplateRenderedEvent($this->share, BeforeTemplateRenderedEvent::SCOPE_PUBLIC_SHARE_AUTH));
 
-		return new TemplateResponse('core', 'publicshareauth', $templateParameters, 'guest');
+		// PlainShow Cloud's own page for the password step.
+		return new TemplateResponse('plainshow', 'shareauth', $templateParameters, TemplateResponse::RENDER_AS_BLANK);
 	}
 
 	/**
@@ -115,7 +117,8 @@ class ShareController extends AuthPublicShareController {
 
 		$this->eventDispatcher->dispatchTyped(new BeforeTemplateRenderedEvent($this->share, BeforeTemplateRenderedEvent::SCOPE_PUBLIC_SHARE_AUTH));
 
-		return new TemplateResponse('core', 'publicshareauth', $templateParameters, 'guest');
+		// PlainShow Cloud's own page for the password step.
+		return new TemplateResponse('plainshow', 'shareauth', $templateParameters, TemplateResponse::RENDER_AS_BLANK);
 	}
 
 	/**

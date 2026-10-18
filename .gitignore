@@ -8,3 +8,4 @@
 /assets/
 /node_modules/
 *.log
+/.plainshow-switching

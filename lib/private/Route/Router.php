@@ -311,6 +311,9 @@ class Router implements IRouter {
 	 * @return void
 	 */
 	public function match($url) {
+		if ($this->appManager->isEnabledForAnyone('plainshow')) {
+			$url = \OCA\PlainShow\Service\WebRoutes::route($url, $this->context->getMethod());
+		}
 		$parameters = $this->findMatchingRoute($url);
 
 		$this->eventLogger->start('route:run', 'Run route');

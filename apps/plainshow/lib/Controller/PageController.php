@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace OCA\PlainShow\Controller;
 
+use OCA\PlainShow\Service\Page;
+use OCA\PlainShow\Service\WebRoutes;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
-use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Http\RedirectResponse;
+use OCP\AppFramework\Http\NotFoundResponse;
+use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\IRootFolder;
 use OCP\IGroupManager;
@@ -31,6 +35,7 @@ class PageController extends Controller {
         private IGroupManager $groups,
         private IRootFolder $root,
         private IURLGenerator $urls,
+        private Page $page,
     ) {
         parent::__construct($appName, $request);
     }
@@ -54,42 +59,50 @@ class PageController extends Controller {
         $user = $this->session->getUser();
         $home = $this->root->getUserFolder($user->getUID());
         $quota = $user->getQuotaBytes();
-        $base = rtrim($this->urls->linkToRoute('plainshow.page.index'), '/');
-        $app = __DIR__ . '/../..';
-
-        $response = new TemplateResponse('plainshow', 'main', [
-            'boot' => [
-                'base' => $base,
-                'webroot' => \OC::$WEBROOT,
-                'requestToken' => Util::callRegister(),
-                'user' => [
-                    'id' => $user->getUID(),
-                    'name' => $user->getDisplayName(),
-                    'email' => $user->getEMailAddress(),
-                    'admin' => $this->groups->isAdmin($user->getUID()),
-                    'avatar' => $this->urls->linkToRoute('core.avatar.getAvatar', ['userId' => $user->getUID(), 'size' => 64]),
-                ],
-                'quota' => ['used' => $home->getSize(), 'total' => $quota === FileInfo::SPACE_UNLIMITED ? null : $quota],
-                'logout' => $this->urls->linkToRoute('core.login.logout', ['requesttoken' => Util::callRegister()]),
+        return $this->page->render([
+            'user' => [
+                'id' => $user->getUID(),
+                'name' => $user->getDisplayName(),
+                'email' => $user->getEMailAddress(),
+                'admin' => $this->groups->isAdmin($user->getUID()),
+                'avatar' => $this->urls->linkToRoute('core.avatar.getAvatar', ['userId' => $user->getUID(), 'size' => 64]),
             ],
-            'version' => substr(md5((string)@filemtime("$app/ui/css/plainshow.css")), 0, 10),
-            'bundle' => $this->bundle($app),
-        ], TemplateResponse::RENDER_AS_BLANK);
-
-        $policy = new ContentSecurityPolicy();
-        $policy->addAllowedImageDomain('blob:');
-        $policy->addAllowedMediaDomain('blob:');
-        $policy->addAllowedWorkerSrcDomain('blob:');
-        $policy->addAllowedFrameDomain('blob:');
-        $response->setContentSecurityPolicy($policy);
-        return $response;
+            'quota' => ['used' => $home->getSize(), 'total' => $quota === FileInfo::SPACE_UNLIMITED ? null : $quota],
+            'logout' => $this->urls->linkToRoute('core.login.logout', ['requesttoken' => Util::callRegister()]),
+        ]);
     }
 
-    /** The built script and stylesheet, from Vite's manifest. */
-    private function bundle(string $app): array {
-        $manifest = json_decode((string)@file_get_contents("$app/js/.vite/manifest.json"), true) ?: [];
-        $entry = $manifest['src/main.tsx'] ?? [];
-        // With one stylesheet for everything, Vite lists it on its own as style.css.
-        return ['js' => $entry['file'] ?? 'cloud.js', 'css' => $entry['css'][0] ?? $manifest['style.css']['file'] ?? null];
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'GET', url: '/legacy')]
+    public function legacy(): RedirectResponse|NotFoundResponse {
+        $path = $this->request->getRawPathInfo();
+        $query = $this->request->getParams();
+        $destination = WebRoutes::destination($path, $query);
+        if ($destination === null) {
+            return new NotFoundResponse();
+        }
+        $fileId = $query['fileid'] ?? null;
+        if (preg_match('~^/(?:f|apps/files/files)/(\d+)/?$~D', $path, $matches)) {
+            $fileId = $matches[1];
+        }
+        if ($fileId !== null && str_starts_with($destination, '/files') && is_scalar($fileId) && ctype_digit((string)$fileId)) {
+            $home = $this->root->getUserFolder($this->session->getUser()->getUID());
+            $nodes = $home->getById((int)$fileId);
+            if (!$nodes) {
+                return new NotFoundResponse();
+            }
+            $node = reset($nodes);
+            $relative = $home->getRelativePath($node->getPath());
+            if ($relative === null) {
+                return new NotFoundResponse();
+            }
+            $folder = $node instanceof File ? dirname($relative) : $relative;
+            $destination = '/files' . WebRoutes::filePath($folder === '.' ? '' : $folder);
+            if ($node instanceof File) {
+                $destination .= '?open=' . rawurlencode($node->getName());
+            }
+        }
+        return new RedirectResponse(\OC::$WEBROOT . $destination);
     }
 }

@@ -3,7 +3,7 @@ import * as dav from '../api/dav';
 import { Entry } from '../api/dav';
 import { formatBytes } from '../api/http';
 import { Share, sharedByMe, sharedWithMe } from '../api/shares';
-import { Link, navigate } from '../router';
+import { fileRoute, Link, navigate } from '../router';
 import { PageHead, useOutside } from '../Shell';
 import { failed, toast } from '../toast';
 import { Button, Empty, Frame, relativeTime } from '../ui';
@@ -76,7 +76,7 @@ export default function Files({ view, path }: { view: View; path: string }) {
 
     useEffect(() => { setItems(null); setSelected(new Set()); setFilter(''); setViewing(null); void load(); }, [load]);
     useEffect(() => onUploaded((into) => { if (view === 'folder' && into === path) void load(); }), [view, path, load]);
-    useEffect(() => { const open = new URLSearchParams(window.location.search).get('open'); if (open && items) { const at = sorted.findIndex((item) => item.name === open); if (at >= 0) setViewing(at); } }, [items]);
+    useEffect(() => { const open = new URLSearchParams(window.location.search).get('open'); if (open && items) { const at = files.findIndex((item) => item.name === open); if (at >= 0) setViewing(at); } }, [items]);
 
     const sorted = useMemo(() => {
         const list = (items ?? []).filter((item) => !filter || item.name.toLowerCase().includes(filter.toLowerCase()));
@@ -93,7 +93,7 @@ export default function Files({ view, path }: { view: View; path: string }) {
     const chosen = sorted.filter((item) => selected.has(item.path));
 
     const open = (entry: Entry) => {
-        if (entry.folder) { navigate('/files/' + entry.path); return; }
+        if (entry.folder) { navigate(fileRoute(entry.path)); return; }
         setViewing(files.indexOf(entry));
     };
     const toggleSort = (by: Sort['by']) => { const next = { by, down: sort.by === by ? !sort.down : by !== 'name' }; setSort(next); store.set('cloud-sort', JSON.stringify(next)); };
@@ -140,7 +140,7 @@ export default function Files({ view, path }: { view: View; path: string }) {
                     <nav className="cloud-crumbs" aria-label="Folders">
                         <Link to="/" className="cloud-crumbs__item"><i className="bx bx-home-alt" />Files</Link>
                         {crumbs.map((part, index) => (
-                            <Link key={index} to={'/files/' + crumbs.slice(0, index + 1).join('/')} className="cloud-crumbs__item"
+                            <Link key={index} to={fileRoute(crumbs.slice(0, index + 1).join('/'))} className="cloud-crumbs__item"
                                 onDragOver={(event) => event.preventDefault()}
                                 onDrop={async (event) => { event.preventDefault(); event.stopPropagation(); const from = event.dataTransfer.getData('text/cloud-path'); if (from) { try { await dav.move(from, crumbs.slice(0, index + 1).join('/') + '/' + from.split('/').pop()); void load(); } catch (problem) { failed(problem); } } }}>
                                 <i className="bx bx-chevron-right" />{part}
@@ -299,7 +299,7 @@ function ItemMenu({ entry, view, onFavorite, onDialog, onDelete }: { entry: Entr
         <div className={`ps-dropdown cloud-menu${open ? ' is-open' : ''}`} ref={ref}>
             <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-btn--sm" aria-label={`Actions for ${entry.name}`} aria-expanded={open} onClick={(event) => { event.stopPropagation(); toggle(event.currentTarget); }}><i className="bx bx-dots-horizontal-rounded" /></button>
             {open && <div className="ps-dropdown__menu cloud-menu__panel" style={place}>
-                {view !== 'folder' && <button type="button" className="ps-dropdown__item" onClick={act(() => navigate('/files/' + where + (entry.folder ? '' : '?open=' + encodeURIComponent(entry.name))))}><i className="bx bx-folder-open" />Show in its folder</button>}
+                {view !== 'folder' && <button type="button" className="ps-dropdown__item" onClick={act(() => navigate(fileRoute(where, entry.folder ? undefined : entry.name)))}><i className="bx bx-folder-open" />Show in its folder</button>}
                 {entry.folder
                     ? <a className="ps-dropdown__item" href={dav.zipUrl(entry.path)} onClick={() => setOpen(false)}><i className="bx bx-download" />Download as zip</a>
                     : <a className="ps-dropdown__item" href={dav.fileUrl(entry.path)} download={entry.name} onClick={() => setOpen(false)}><i className="bx bx-download" />Download</a>}
