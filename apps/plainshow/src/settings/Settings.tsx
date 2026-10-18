@@ -67,26 +67,25 @@ function You() {
     return (
         <div className="cloud-settings__grid">
             <Frame>
-                <FrameHead title="Storage" text={storage.total ? `${formatBytes(storage.files)} of ${formatBytes(storage.total)} used` : `${formatBytes(storage.files)} used, no limit`} />
+                <FrameHead title="Storage" text={storage.total ? `${formatBytes(storage.files)} of ${formatBytes(storage.total)} used` : `${formatBytes(storage.files)} used`} />
                 {storage.total !== null && <Meter value={used} label="Storage used" />}
                 <ul className="ps-chain cloud-settings__list">
                     <Line icon="bx-folder" title="Your files" meta={formatBytes(storage.files)} />
-                    <Line icon="bx-trash" title="Trash" meta={formatBytes(storage.trash)} text={retentionLabel(data.retention.trash, 'trash')} action={<Link to="/trash" className="ps-btn ps-btn--sm">Open</Link>} />
-                    <Line icon="bx-history" title="Old versions" meta={formatBytes(storage.versions)} text={retentionLabel(data.retention.versions, 'versions')} />
+                    <Line icon="bx-trash" title="Trash" meta={formatBytes(storage.trash)} action={<Link to="/trash" className="ps-btn ps-btn--sm">Open</Link>} />
+                    <Line icon="bx-history" title="Old versions" meta={formatBytes(storage.versions)} />
                 </ul>
-                <p className="ps-small ps-muted">The trash and old versions do not count toward your limit.</p>
             </Frame>
             <Frame>
-                <FrameHead title="Sharing" text="How files others share with you arrive." />
+                <FrameHead title="Sharing" />
                 <div className="ps-stack">
                     {!sharing.acceptEnforced && (
                         <label className="cloud-setting">
-                            <span><strong>Accept shares right away</strong><span className="ps-small ps-muted">Otherwise you choose to accept each one.</span></span>
+                            <span><strong>Accept shares automatically</strong></span>
                             <Switch checked={sharing.accept} label="Accept shares right away" onChange={(accept) => save({ accept })} />
                         </label>
                     )}
                     {sharing.folderAllowed && (
-                        <Field label="Put shared files in" htmlFor="share-folder" help="A folder in your files. Leave / for the top.">
+                        <Field label="Put shared files in" htmlFor="share-folder">
                             <form className="cloud-inline" onSubmit={(event) => { event.preventDefault(); void save({ folder }); }}>
                                 <input id="share-folder" className="ps-input" value={folder} onChange={(event) => setFolder(event.target.value)} />
                                 <Button type="submit" disabled={folder === sharing.folder}>Save</Button>
@@ -97,9 +96,9 @@ function You() {
                         <h3 className="cloud-subhead">Public links</h3>
                         {!rules.links ? <p className="ps-small">Public links are turned off for this Cloud.</p> : (
                             <ul className="ps-small ps-muted">
-                                <li>{rules.passwordRequired ? 'Every link needs a password.' : rules.passwordDefault ? 'Links get a password unless you remove it.' : 'A password is up to you.'}</li>
-                                <li>{rules.expireRequired ? `Links stop working after ${rules.expireDays} days at the most.` : rules.expireDefault ? `Links stop working after ${rules.expireDays} days unless you change it.` : 'Links work until you remove them, unless you set an end date.'}</li>
-                                {!rules.upload && <li>People with a link cannot upload.</li>}
+                                <li>{rules.passwordRequired ? 'Password required' : rules.passwordDefault ? 'Password suggested' : 'Password optional'}</li>
+                                <li>{rules.expireRequired ? `Expires within ${rules.expireDays} days` : rules.expireDefault ? `${rules.expireDays}-day expiry by default` : 'No default expiry'}</li>
+                                {!rules.upload && <li>Uploads off</li>}
                             </ul>
                         )}
                     </div>
@@ -182,23 +181,24 @@ function Devices() {
     return (
         <div className="cloud-settings__grid">
             <Frame>
-                <FrameHead title="Connect a phone or computer" />
-                <ol className="cloud-settings__steps">
-                    <li>Get the <strong>Nextcloud</strong> app for iPhone, Android or your computer.</li>
-                    <li>Enter the server address <code className="ps-code">{server}</code> <Button size="sm" variant="ghost" iconOnly icon="bx-copy" aria-label="Copy the address" onClick={() => navigator.clipboard.writeText(server).then(() => toast('Copied.'))} /></li>
-                    <li>Sign in with PlainShow when it asks.</li>
-                </ol>
-                <p className="ps-small ps-muted">The app then keeps your files in sync and can upload your photos.</p>
+                <FrameHead title="Connect a device" />
+                <Field label="Cloud address">
+                    <div className="cloud-inline">
+                        <input className="ps-input" readOnly value={server} onFocus={(event) => event.target.select()} />
+                        <Button iconOnly icon="bx-copy" aria-label="Copy the address" onClick={() => navigator.clipboard.writeText(server).then(() => toast('Copied.'))} />
+                    </div>
+                </Field>
+                <p className="ps-small ps-muted">Use this address in the Nextcloud phone or desktop app. Sign in with PlainShow.</p>
             </Frame>
             <Frame>
-                <FrameHead title="App passwords" text="For apps that cannot sign in with PlainShow, like the calendar on an iPhone or DAVx⁵. Use your username and the password made here." />
+                <FrameHead title="App passwords" text="For calendar and contacts apps." />
                 <form className="cloud-inline" onSubmit={(event) => { event.preventDefault(); void create(); }}>
-                    <input className="ps-input" placeholder="What is it for? (say, the calendar on my phone)" value={name} onChange={(event) => setName(event.target.value)} aria-label="App password name" />
-                    <Button type="submit" variant="primary" loading={busy} disabled={!name.trim()}>Make one</Button>
+                    <input className="ps-input" placeholder="Name this device" value={name} onChange={(event) => setName(event.target.value)} aria-label="App password name" />
+                    <Button type="submit" variant="primary" loading={busy} disabled={!name.trim()}>Create</Button>
                 </form>
             </Frame>
-            <Frame className="ps-span-all">
-                <FrameHead title="Signed in" text="Everything that can reach your Cloud right now. Sign out what you do not recognise." />
+            <Frame className="ps-span-all cloud-settings__sessions">
+                <FrameHead title="Signed in" />
                 {list === null ? <Loading /> : list.length === 0 ? <Empty icon="bx-mobile">Nothing yet.</Empty> : (
                     <>
                         {apps.length > 0 && <><h3 className="cloud-subhead">Apps and devices</h3><ul className="ps-chain">{apps.map(row)}</ul></>}
@@ -265,9 +265,9 @@ function AdminPage() {
             {retention.choices.map((choice) => <option key={choice} value={choice}>{retentionLabel(choice, what)}</option>)}
         </select>
     );
-    const toggle = (key: keyof Rules, title: string, text: string, disabled = false) => (
+    const toggle = (key: keyof Rules, title: string, disabled = false) => (
         <label className={`cloud-setting${disabled ? ' is-disabled' : ''}`}>
-            <span><strong>{title}</strong><span className="ps-small ps-muted">{text}</span></span>
+            <span><strong>{title}</strong></span>
             <Switch checked={!!rules[key]} disabled={disabled} label={title} onChange={(value) => setRule({ [key]: value })} />
         </label>
     );
@@ -301,14 +301,14 @@ function AdminPage() {
                 </div>
             </Frame>
             <Frame>
-                <FrameHead title="Public links" text="What people can do with links to files and folders." />
+                <FrameHead title="Public links" />
                 <div className="ps-stack">
-                    {toggle('links', 'Allow public links', 'Anyone with the link can open the file or folder.')}
-                    {toggle('upload', 'Allow uploads to shared folders', 'People with a folder link can add files when the sharer allows it.', !rules.links)}
-                    {toggle('passwordDefault', 'Suggest a password', 'New links get a password unless the sharer removes it.', !rules.links || rules.passwordRequired)}
-                    {toggle('passwordRequired', 'Require a password', 'Links cannot be made without one.', !rules.links)}
-                    {toggle('expireDefault', 'Set an end date', 'New links stop working after some days.', !rules.links)}
-                    {toggle('expireRequired', 'Require an end date', 'Sharers cannot set a later date or none.', !rules.links || !rules.expireDefault)}
+                    {toggle('links', 'Allow public links')}
+                    {toggle('upload', 'Allow uploads to shared folders', !rules.links)}
+                    {toggle('passwordDefault', 'Suggest a password', !rules.links || rules.passwordRequired)}
+                    {toggle('passwordRequired', 'Require a password', !rules.links)}
+                    {toggle('expireDefault', 'Set an end date', !rules.links)}
+                    {toggle('expireRequired', 'Require an end date', !rules.links || !rules.expireDefault)}
                     <Field label="Days until a link stops working" htmlFor="expire-days">
                         <form className="cloud-inline" onSubmit={(event) => { event.preventDefault(); void setRule({ expireDays: Number(days) }); }}>
                             <input id="expire-days" type="number" min={1} max={3650} className="ps-input" value={days} disabled={!rules.links || !rules.expireDefault} onChange={(event) => setDays(event.target.value)} />
@@ -318,14 +318,14 @@ function AdminPage() {
                 </div>
             </Frame>
             <Frame>
-                <FrameHead title="Trash and old versions" text="How long deleted files and earlier versions are kept, for everyone." />
+                <FrameHead title="Trash and old versions" />
                 <div className="ps-stack">
                     <Field label="Trash">{retentionChoice(retention.trash, 'trash')}</Field>
                     <Field label="Old versions">{retentionChoice(retention.versions, 'versions')}</Field>
                 </div>
             </Frame>
             <Frame className="ps-span-all">
-                <FrameHead title="Background jobs" text="Cleanup, previews, share expiry and reminders run in the background." action={<Button size="sm" variant="ghost" onClick={() => setAllJobs((v) => !v)}>{allJobs ? 'Show problems only' : `Show all ${jobs.list.length}`}</Button>} />
+                <FrameHead title="Background jobs" action={<Button size="sm" variant="ghost" onClick={() => setAllJobs((v) => !v)}>{allJobs ? 'Problems only' : `Show all ${jobs.list.length}`}</Button>} />
                 <ul className="ps-chain">
                     <Line icon={late ? 'bx-error-circle' : 'bx-check-circle'} title={late ? <span className="cloud-danger">Jobs are not running on time</span> : 'Running on time'} text={`Runs by ${jobs.mode === 'cron' ? 'the system timer every 5 minutes' : jobs.mode}. Last run ${ago(jobs.lastCron)}.`} />
                     {stuck.length > 0 && !allJobs && <Line icon="bx-error" title={<span className="cloud-danger">{stuck.length} stuck</span>} text="Started over an hour ago and not finished." />}

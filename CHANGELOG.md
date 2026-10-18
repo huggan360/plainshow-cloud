@@ -5,6 +5,12 @@
 Changelog
 =========
 
+## 1.0.1
+
+- Phone and desktop device approval now uses PlainShow Login for both login flows, with the Cloud engine still issuing and validating app passwords.
+- PlainShow sign-out revokes Cloud browser sessions; direct Cloud sign-out goes through the same account session.
+- Settings has shorter labels and a mobile layout that keeps controls visible. Direct `/index.php` visits return to Cloud's home page.
+
 ## 1.0.0
 
 - PlainShow Cloud replaces the Nextcloud web interface with Files, Photos, Calendar, Tasks and Settings, using PlainShow's shared design system.

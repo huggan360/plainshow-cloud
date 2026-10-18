@@ -22,7 +22,6 @@ use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\RedirectResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\AppFramework\Http\StandaloneTemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Authentication\Exceptions\InvalidTokenException;
@@ -79,43 +78,21 @@ class ClientFlowLoginController extends Controller {
 		return hash_equals($currentToken, $stateToken);
 	}
 
-	private function stateTokenForbiddenResponse(): StandaloneTemplateResponse {
-		$response = new StandaloneTemplateResponse(
-			$this->appName,
-			'403',
-			[
-				'message' => $this->l10n->t('State token does not match'),
-			],
-			'guest'
-		);
-		$response->setStatus(Http::STATUS_FORBIDDEN);
-		return $response;
+	private function stateTokenForbiddenResponse(): RedirectResponse {
+		return new RedirectResponse('https://login.plainshow.se/devices/result?status=expired');
 	}
 
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[UseSession]
 	#[FrontpageRoute(verb: 'GET', url: '/login/flow')]
-	public function showAuthPickerPage(string $clientIdentifier = '', string $user = '', int $direct = 0, string $providedRedirectUri = ''): StandaloneTemplateResponse {
+	public function showAuthPickerPage(string $clientIdentifier = '', string $user = '', int $direct = 0, string $providedRedirectUri = ''): Response {
 		$clientName = $this->getClientName();
 
 		// Only the apps, which send the API request header. OAuth2 clients are gone.
 		$clientRequest = $this->request->getHeader('OCS-APIREQUEST');
 		if ($clientRequest !== 'true' || $clientIdentifier !== '') {
-			return new StandaloneTemplateResponse(
-				$this->appName,
-				'error',
-				[
-					'errors'
-					=> [
-						[
-							'error' => 'Access Forbidden',
-							'hint' => 'Invalid request',
-						],
-					],
-				],
-				'guest'
-			);
+			return $this->stateTokenForbiddenResponse();
 		}
 
 		$stateToken = $this->random->generate(
@@ -124,20 +101,7 @@ class ClientFlowLoginController extends Controller {
 		);
 		$this->session->set(self::STATE_NAME, $stateToken);
 
-		$csp = new ContentSecurityPolicy();
-		$csp->addAllowedFormActionDomain('nc://*');
-
-		$this->initialState->provideInitialState('loginFlowState', 'auth');
-		$this->initialState->provideInitialState('loginFlowAuth', [
-			'client' => $clientName,
-			'clientIdentifier' => $clientIdentifier,
-			'instanceName' => $this->defaults->getName(),
-			'stateToken' => $stateToken,
-			'serverHost' => $this->getServerPath(),
-			'oauthState' => $this->session->get('oauth.state'),
-			'direct' => (bool)$direct,
-			'providedRedirectUri' => $providedRedirectUri,
-			'loginRedirectUrl' => $this->urlGenerator->linkToRoute(
+		return new RedirectResponse($this->urlGenerator->linkToRoute(
 				'core.ClientFlowLogin.grantPage',
 				[
 					'stateToken' => $stateToken,
@@ -146,19 +110,7 @@ class ClientFlowLoginController extends Controller {
 					'user' => $user,
 					'direct' => $direct,
 					'providedRedirectUri' => $providedRedirectUri,
-				]),
-			'appTokenUrl' => $this->urlGenerator->linkToRouteAbsolute('core.ClientFlowLogin.apptokenRedirect'),
-		]);
-
-
-		Util::addScript('core', 'login_flow');
-		$response = new StandaloneTemplateResponse(
-			$this->appName,
-			'loginflow',
-			renderAs: 'guest'
-		);
-		$response->setContentSecurityPolicy($csp);
-		return $response;
+				]));
 	}
 
 	#[NoAdminRequired]
@@ -181,38 +133,16 @@ class ClientFlowLoginController extends Controller {
 		}
 		$clientName = $this->getClientName();
 
-		$csp = new ContentSecurityPolicy();
-		$csp->addAllowedFormActionDomain('nc://*');
-
 		$user = $this->userSession->getUser();
 		\assert($user !== null);
-
-		$this->initialState->provideInitialState('loginFlowState', 'grant');
-		$this->initialState->provideInitialState('loginFlowGrant', [
-			'actionUrl' => $this->urlGenerator->linkToRouteAbsolute(
-				'core.ClientFlowLogin.generateAppPassword',
-			),
-			'client' => $clientName,
-			'clientIdentifier' => $clientIdentifier,
-			'instanceName' => $this->defaults->getName(),
-			'stateToken' => $stateToken,
-			'serverHost' => $this->getServerPath(),
-			'oauthState' => $this->session->get('oauth.state'),
-			'direct' => $direct,
-			'providedRedirectUri' => $providedRedirectUri,
-			'userDisplayName' => $user->getDisplayName(),
-			'userId' => $user->getUID(),
-		]);
-
-		Util::addScript('core', 'login_flow');
-		$response = new StandaloneTemplateResponse(
-			$this->appName,
-			'loginflow',
-			renderAs: 'guest'
-		);
-
-		$response->setContentSecurityPolicy($csp);
-		return $response;
+		return new RedirectResponse('https://login.plainshow.se/devices/connect?' . http_build_query([
+			'flow' => 'v1',
+			'server' => $this->request->getServerHost(),
+			'account' => $user->getUID(),
+			'client' => mb_substr($clientName, 0, 80),
+			'state' => $stateToken,
+			'requesttoken' => Util::callRegister(),
+		], '', '&', PHP_QUERY_RFC3986));
 	}
 
 	#[NoAdminRequired]
@@ -295,16 +225,7 @@ class ClientFlowLoginController extends Controller {
 				throw new InvalidTokenException('login name does not match');
 			}
 		} catch (InvalidTokenException $e) {
-			$response = new StandaloneTemplateResponse(
-				$this->appName,
-				'403',
-				[
-					'message' => $this->l10n->t('Invalid app password'),
-				],
-				'guest'
-			);
-			$response->setStatus(Http::STATUS_FORBIDDEN);
-			return $response;
+			return $this->stateTokenForbiddenResponse();
 		}
 
 		$redirectUri = 'nc://login/server:' . $this->getServerPath() . '&user:' . urlencode($user) . '&password:' . urlencode($password);

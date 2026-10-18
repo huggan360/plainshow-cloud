@@ -37,17 +37,19 @@ async function flow(version) {
         await page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
         if (version === 1) await page.send('Network.setExtraHTTPHeaders', { headers: { 'OCS-APIREQUEST': 'true' } });
         await page.go(start?.login ?? H + '/index.php/login/flow');
-        const login = `Array.from(document.querySelectorAll('button,a,input[type=submit]')).find(node => /log in|connect/i.test(node.textContent || node.value || ''))`;
-        await wait(page, login);
-        await page.eval(`(${login}).click()`);
         await wait(page, 'document.querySelector("input[name=login]")');
         assert.equal(await page.eval('location.hostname'), 'login.plainshow.se');
         await page.eval(`document.querySelector('input[name=login]').value='e2e_cloud'; document.querySelector('input[name=password]').value=${JSON.stringify(password)}; document.querySelector('form').requestSubmit()`);
-        const grant = `Array.from(document.querySelectorAll('button,input[type=submit]')).find(node => /grant access/i.test(node.textContent || node.value || ''))`;
-        await wait(page, grant);
-        await page.eval(`(${grant}).click()`);
+        await wait(page, 'document.querySelector("form[action*=login]") && document.querySelector("input[name=stateToken]")');
+        assert.equal(await page.eval('location.hostname'), 'login.plainshow.se');
+        await page.shot(`/tmp/plainshow-device-v${version}.png`);
+        await page.send('Network.setExtraHTTPHeaders', { headers: {} });
+        await page.eval('document.querySelector("form[action*=login]").requestSubmit()');
         await sleep(2000);
         if (version === 1) {
+            if (!page.seen.nc) {
+                await page.shot('/tmp/plainshow-device-v1-after.png');
+            }
             const match = page.seen.nc?.match(/^nc:\/\/login\/server:(.*)&user:(.*)&password:(.*)$/);
             assert.ok(match, 'Phone flow must return the app credentials through nc://.');
             credentials = { loginName: decodeURIComponent(match[2]), appPassword: decodeURIComponent(match[3]) };

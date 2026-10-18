@@ -33,6 +33,9 @@
 
         Header onsuccess unset X-Frame-Options
         Header always set X-Frame-Options "SAMEORIGIN"
+        <If "%{REQUEST_URI} =~ m#/apps/plainshow/auth/frontchannel$#">
+            Header always unset X-Frame-Options
+        </If>
 
         Header onsuccess unset X-Permitted-Cross-Domain-Policies
         Header always set X-Permitted-Cross-Domain-Policies "none"
@@ -92,6 +95,9 @@
 
     RewriteCond %{DOCUMENT_ROOT}/.plainshow-switching -f
     RewriteRule ^ - [R=503,L]
+
+    RewriteCond %{THE_REQUEST} \s/+index\.php(?:\?|\s) [NC]
+    RewriteRule ^index\.php$ / [R=302,L]
 
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

@@ -5,7 +5,7 @@
     <name>PlainShow Cloud</name>
     <summary>Files, photos and calendar in PlainShow</summary>
     <description>PlainShow's own Cloud, on the Nextcloud engine underneath.</description>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <licence>agpl</licence>
     <author>PlainShow</author>
     <namespace>PlainShow</namespace>

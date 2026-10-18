@@ -26,7 +26,6 @@ use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\RedirectResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\AppFramework\Http\StandaloneTemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\Authentication\Exceptions\InvalidTokenException;
 use OCP\Defaults;
@@ -108,7 +107,7 @@ class ClientFlowLoginV2Controller extends Controller {
 	#[OpenAPI(scope: OpenAPI::SCOPE_IGNORE)]
 	#[UseSession]
 	#[FrontpageRoute(verb: 'GET', url: '/login/v2/flow')]
-	public function showAuthPickerPage(string $user = '', int $direct = 0): StandaloneTemplateResponse {
+	public function showAuthPickerPage(string $user = '', int $direct = 0): Response {
 		try {
 			$flow = $this->getFlowByLoginToken();
 		} catch (LoginFlowV2NotFoundException $e) {
@@ -123,22 +122,7 @@ class ClientFlowLoginV2Controller extends Controller {
 		);
 		$this->session->set(self::STATE_NAME, $stateToken);
 
-		$this->initialState->provideInitialState('loginFlowState', 'auth');
-		$this->initialState->provideInitialState('loginFlowAuth', [
-			'client' => $flow->getClientName(),
-			'instanceName' => $this->defaults->getName(),
-			'stateToken' => $stateToken,
-			'loginRedirectUrl' => $this->urlGenerator->linkToRouteAbsolute('core.ClientFlowLoginV2.grantPage', ['stateToken' => $stateToken, 'user' => $user, 'direct' => $direct]),
-			'appTokenUrl' => $this->urlGenerator->linkToRouteAbsolute('core.ClientFlowLoginV2.apptokenRedirect'),
-		]);
-
-
-		Util::addScript('core', 'login_flow');
-		return new StandaloneTemplateResponse(
-			$this->appName,
-			'loginflow',
-			renderAs: 'guest'
-		);
+		return new RedirectResponse($this->urlGenerator->linkToRouteAbsolute('core.ClientFlowLoginV2.grantPage', ['stateToken' => $stateToken, 'user' => $user, 'direct' => $direct]));
 	}
 
 	#[NoAdminRequired]
@@ -147,7 +131,7 @@ class ClientFlowLoginV2Controller extends Controller {
 	#[UseSession]
 	#[FrontpageRoute(verb: 'GET', url: '/login/v2/grant')]
 	#[NoSameSiteCookieRequired]
-	public function grantPage(?string $stateToken, int $direct = 0): StandaloneTemplateResponse {
+	public function grantPage(?string $stateToken, int $direct = 0): Response {
 		if ($stateToken === null) {
 			return $this->stateTokenMissingResponse();
 		}
@@ -166,24 +150,14 @@ class ClientFlowLoginV2Controller extends Controller {
 		$user = $this->userSession->getUser();
 		\assert($user !== null);
 
-		$this->initialState->provideInitialState('loginFlowState', 'grant');
-		$this->initialState->provideInitialState('loginFlowGrant', [
-			'actionUrl' => $this->urlGenerator->linkToRouteAbsolute('core.ClientFlowLoginV2.generateAppPassword'),
-			'userId' => $user->getUID(),
-			'userDisplayName' => $user->getDisplayName(),
-			'client' => $flow->getClientName(),
-			'instanceName' => $this->defaults->getName(),
-			'stateToken' => $stateToken,
-			'direct' => $direct === 1,
-		]);
-
-
-		Util::addScript('core', 'login_flow');
-		return new StandaloneTemplateResponse(
-			$this->appName,
-			'loginflow',
-			renderAs: 'guest'
-		);
+		return new RedirectResponse('https://login.plainshow.se/devices/connect?' . http_build_query([
+			'flow' => 'v2',
+			'server' => $this->request->getServerHost(),
+			'account' => $user->getUID(),
+			'client' => mb_substr($flow->getClientName(), 0, 80),
+			'state' => $stateToken,
+			'requesttoken' => Util::callRegister(),
+		], '', '&', PHP_QUERY_RFC3986));
 	}
 
 	#[PublicPage]
@@ -217,16 +191,7 @@ class ClientFlowLoginV2Controller extends Controller {
 				throw new InvalidTokenException('login name does not match');
 			}
 		} catch (InvalidTokenException $e) {
-			$response = new StandaloneTemplateResponse(
-				$this->appName,
-				'403',
-				[
-					'message' => $this->l10n->t('Invalid app password'),
-				],
-				'guest'
-			);
-			$response->setStatus(Http::STATUS_FORBIDDEN);
-			return $response;
+			return $this->stateTokenForbiddenResponse();
 		}
 
 		$result = $this->loginFlowV2Service->flowDoneWithAppPassword($loginToken, $this->getServerPath(), $token->getLoginName(), $password);
@@ -264,27 +229,11 @@ class ClientFlowLoginV2Controller extends Controller {
 		return $this->handleFlowDone($result);
 	}
 
-	private function handleFlowDone(bool $result): StandaloneTemplateResponse {
+	private function handleFlowDone(bool $result): Response {
 		if ($result) {
-			Util::addScript('core', 'login_flow');
-			$this->initialState->provideInitialState('loginFlowState', 'done');
-			return new StandaloneTemplateResponse(
-				$this->appName,
-				'loginflow',
-				renderAs: 'guest'
-			);
+			return new RedirectResponse('https://login.plainshow.se/devices/result?status=connected');
 		}
-
-		$response = new StandaloneTemplateResponse(
-			$this->appName,
-			'403',
-			[
-				'message' => $this->l10n->t('Could not complete login'),
-			],
-			'guest'
-		);
-		$response->setStatus(Http::STATUS_FORBIDDEN);
-		return $response;
+		return new RedirectResponse('https://login.plainshow.se/devices/result?status=expired');
 	}
 
 	/**
@@ -323,30 +272,12 @@ class ClientFlowLoginV2Controller extends Controller {
 		return hash_equals($currentToken, $stateToken);
 	}
 
-	private function stateTokenMissingResponse(): StandaloneTemplateResponse {
-		$response = new StandaloneTemplateResponse(
-			$this->appName,
-			'403',
-			[
-				'message' => $this->l10n->t('State token missing'),
-			],
-			'guest'
-		);
-		$response->setStatus(Http::STATUS_FORBIDDEN);
-		return $response;
+	private function stateTokenMissingResponse(): RedirectResponse {
+		return new RedirectResponse('https://login.plainshow.se/devices/result?status=expired');
 	}
 
-	private function stateTokenForbiddenResponse(): StandaloneTemplateResponse {
-		$response = new StandaloneTemplateResponse(
-			$this->appName,
-			'403',
-			[
-				'message' => $this->l10n->t('State token does not match'),
-			],
-			'guest'
-		);
-		$response->setStatus(Http::STATUS_FORBIDDEN);
-		return $response;
+	private function stateTokenForbiddenResponse(): RedirectResponse {
+		return new RedirectResponse('https://login.plainshow.se/devices/result?status=expired');
 	}
 
 	/**
@@ -363,30 +294,12 @@ class ClientFlowLoginV2Controller extends Controller {
 		return $this->loginFlowV2Service->getByLoginToken($currentToken);
 	}
 
-	private function loginTokenForbiddenResponse(): StandaloneTemplateResponse {
-		$response = new StandaloneTemplateResponse(
-			$this->appName,
-			'403',
-			[
-				'message' => $this->l10n->t('Your login token is invalid or has expired'),
-			],
-			'guest'
-		);
-		$response->setStatus(Http::STATUS_FORBIDDEN);
-		return $response;
+	private function loginTokenForbiddenResponse(): RedirectResponse {
+		return new RedirectResponse('https://login.plainshow.se/devices/result?status=expired');
 	}
 
-	private function loginTokenForbiddenClientResponse(): StandaloneTemplateResponse {
-		$response = new StandaloneTemplateResponse(
-			$this->appName,
-			'403',
-			[
-				'message' => $this->l10n->t('Please use original client'),
-			],
-			'guest'
-		);
-		$response->setStatus(Http::STATUS_FORBIDDEN);
-		return $response;
+	private function loginTokenForbiddenClientResponse(): RedirectResponse {
+		return new RedirectResponse('https://login.plainshow.se/devices/result?status=expired');
 	}
 
 	private function getServerPath(): string {

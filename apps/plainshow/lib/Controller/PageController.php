@@ -11,6 +11,11 @@ use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Http\Response;
+use OCP\AppFramework\Http\ContentSecurityPolicy;
+use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\Http\Attribute\UseSession;
+use OCP\AppFramework\Http\Attribute\NoSameSiteCookieRequired;
 use OCP\AppFramework\Http\RedirectResponse;
 use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\Files\File;
@@ -68,8 +73,26 @@ class PageController extends Controller {
                 'avatar' => $this->urls->linkToRoute('core.avatar.getAvatar', ['userId' => $user->getUID(), 'size' => 64]),
             ],
             'quota' => ['used' => $home->getSize(), 'total' => $quota === FileInfo::SPACE_UNLIMITED ? null : $quota],
-            'logout' => $this->urls->linkToRoute('core.login.logout', ['requesttoken' => Util::callRegister()]),
+            'logout' => 'https://login.plainshow.se/logout?' . http_build_query(['return' => $this->urls->getAbsoluteURL('/')], '', '&', PHP_QUERY_RFC3986),
         ]);
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[UseSession]
+    #[NoSameSiteCookieRequired]
+    #[FrontpageRoute(verb: 'GET', url: '/auth/frontchannel')]
+    public function frontchannel(): Response {
+        if (rtrim((string)$this->request->getParam('iss', ''), '/') === 'https://login.plainshow.se') {
+            $this->session->logout();
+        }
+        $response = new Response();
+        $response->addHeader('Content-Type', 'text/plain; charset=utf-8');
+        $response->addHeader('Cache-Control', 'no-store');
+        $policy = new ContentSecurityPolicy();
+        $policy->addAllowedFrameAncestorDomain('https://login.plainshow.se');
+        $response->setContentSecurityPolicy($policy);
+        return $response;
     }
 
     #[NoAdminRequired]

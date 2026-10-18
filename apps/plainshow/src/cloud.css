@@ -329,6 +329,31 @@
 .ps-chain + .cloud-subhead { margin-top: 16px; }
 @media (max-width: 900px) { .cloud-settings__grid { grid-template-columns: 1fr; } }
 .cloud-settings__grid .ps-frame__head { margin-bottom: 14px; }
+@media (max-width: 600px) {
+    .cloud-settings .ps-frame__panel { padding: 20px; }
+    .cloud-settings__list .ps-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; gap: 4px 8px; }
+    .cloud-settings__list .ps-row__icon { grid-column: 1; }
+    .cloud-settings__list .ps-row__body { grid-column: 2; }
+    .cloud-settings__list .cloud-settings__meta { grid-column: 3; }
+    .cloud-settings__list .ps-row__action { grid-column: 4; }
+    .cloud-settings .cloud-inline { min-width: 0; }
+    .cloud-settings .cloud-inline > .ps-input { min-width: 0; flex: 1 1 0; }
+    .cloud-settings__tabs .ps-tab { white-space: nowrap; }
+    .cloud-settings__people thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .cloud-settings__people tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--ps-line); }
+    .cloud-settings__people tbody tr:last-child { border-bottom: 0; }
+    .cloud-settings__people td { display: block; min-width: 0; padding: 0; border: 0; }
+    .cloud-settings__people td:first-child { grid-column: 1; grid-row: 1; }
+    .cloud-settings__people td:nth-child(3) { grid-column: 2; grid-row: 1; }
+    .cloud-settings__people td:nth-child(2) { grid-column: 1; grid-row: 2; }
+    .cloud-settings__people td:nth-child(4) { grid-column: 1 / -1; grid-row: 3; }
+    .cloud-settings__people td:nth-child(2)::before { content: 'Used: '; }
+    .cloud-settings__people td:nth-child(4)::before { content: 'Last seen: '; }
+    .cloud-settings__sessions .ps-row { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 4px 10px; }
+    .cloud-settings__sessions .ps-row__icon { grid-column: 1; grid-row: 1; }
+    .cloud-settings__sessions .ps-row__body { grid-column: 2; grid-row: 1; }
+    .cloud-settings__sessions .ps-row__action { grid-column: 2; grid-row: 2; justify-self: start; }
+}
 
 /* Share link page */
 .cloud-public { display: flex; flex-direction: column; min-height: 100vh; }
