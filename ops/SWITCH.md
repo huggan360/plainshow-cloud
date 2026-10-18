@@ -37,8 +37,8 @@ Pi-only), where `ops/smoke.sh` passes after the switch.
 
 - `ops/smoke.sh https://cloud.plainshow.se` with a test account's device password.
 - The data comparison against the baseline taken before (per account: files
-  and sizes, calendars and events, contacts, shares, albums, tags, devices):
-  only Talk's room shares may be missing.
+  and sizes, calendars and events, contacts, shares, albums, tags): only Talk's
+  room shares may be missing. Devices are zero: everyone signs in again.
 - A new sign-in on iPhone and on Android goes through PlainShow; photo
   auto-upload is turned back on and an uploaded photo appears.
 - The dashboard's calendar, files and photos widgets.
