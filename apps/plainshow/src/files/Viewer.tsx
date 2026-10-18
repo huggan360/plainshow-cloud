@@ -26,7 +26,7 @@ export default function Viewer({ items, index, onIndex, onClose, onShare, onChan
     useEffect(() => {
         setText(null); setSaved(null); setFull(false);
         if (kind === 'text' || kind === 'code') {
-            if (entry.size > 2 * 1024 * 1024) { setText(''); setSaved(''); return; }
+            if (entry.size > 2 * 1024 * 1024 || entry.src) { setText(''); setSaved(''); return; }
             readText(entry.path).then((content) => { setText(content); setSaved(content); }).catch(failed);
         }
     }, [entry.path, entry.etag]);
@@ -70,7 +70,7 @@ export default function Viewer({ items, index, onIndex, onClose, onShare, onChan
         touch.current = null;
     };
 
-    const src = fileUrl(entry.path);
+    const src = entry.src ?? fileUrl(entry.path);
     return (
         <div className="cloud-viewer" role="dialog" aria-modal="true" aria-label={entry.name} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
             <header className="cloud-viewer__bar">
@@ -85,7 +85,7 @@ export default function Viewer({ items, index, onIndex, onClose, onShare, onChan
             </header>
             <div className={`cloud-viewer__stage cloud-viewer__stage--${kind}`}>
                 {kind === 'image' && (
-                    <img key={entry.path} src={full || entry.mime === 'image/gif' || entry.mime === 'image/svg+xml' ? src : previewUrl(entry, 2048, false)} alt={entry.name} onLoad={() => { if (!full && entry.mime !== 'image/gif') window.setTimeout(() => setFull(true), 300); }} onError={() => setFull(true)} />
+                    <img key={entry.path} src={full || entry.mime === 'image/gif' || entry.mime === 'image/svg+xml' ? src : entry.large ?? previewUrl(entry, 2048, false)} alt={entry.name} onLoad={() => { if (!full && entry.mime !== 'image/gif') window.setTimeout(() => setFull(true), 300); }} onError={() => setFull(true)} />
                 )}
                 {kind === 'video' && <video key={entry.path} src={src} controls autoPlay playsInline />}
                 {kind === 'audio' && <div className="cloud-viewer__audio"><i className="bx bx-music" /><audio key={entry.path} src={src} controls autoPlay /></div>}

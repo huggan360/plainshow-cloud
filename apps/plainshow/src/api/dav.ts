@@ -17,6 +17,8 @@ export type Entry = {
     shared: number[];      // share types on it
     owner: string;
     taken: number | null;  // photo taken date (ms), when known
+    src?: string;          // where to load it, when not from your own files (a shared album)
+    large?: string;        // a large preview to show first
 };
 
 const NS = { d: 'DAV:', oc: 'http://owncloud.org/ns', nc: 'http://nextcloud.org/ns' };

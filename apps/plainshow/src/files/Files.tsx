@@ -276,14 +276,29 @@ function Tile({ entry, selected, onOpen, onSelect, menu }: { entry: Entry; selec
 
 function ItemMenu({ entry, view, onFavorite, onDialog, onDelete }: { entry: Entry; view: View; onFavorite: () => void; onDialog: (dialog: Dialog) => void; onDelete: () => void }) {
     const [open, setOpen] = useState(false);
+    const [place, setPlace] = useState<{ top: number | 'auto'; bottom: number | 'auto'; right: number }>({ top: 'auto', bottom: 'auto', right: 0 });
     const ref = useOutside(open, () => setOpen(false));
     const mine = view !== 'with-you';
+    // The menu floats over everything, below the button or above it near the bottom of the screen.
+    const toggle = (button: HTMLElement) => {
+        const box = button.getBoundingClientRect();
+        const right = Math.max(8, window.innerWidth - box.right);
+        setPlace(box.bottom > window.innerHeight - 380 ? { top: 'auto', bottom: window.innerHeight - box.top + 4, right } : { top: box.bottom + 4, bottom: 'auto', right });
+        setOpen((value) => !value);
+    };
+    useEffect(() => {
+        if (!open) return;
+        const close = () => setOpen(false);
+        window.addEventListener('scroll', close, true);
+        window.addEventListener('resize', close);
+        return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+    }, [open]);
     const act = (fn: () => void) => () => { setOpen(false); fn(); };
     const where = entry.path.split('/').slice(0, -1).join('/');
     return (
         <div className={`ps-dropdown cloud-menu${open ? ' is-open' : ''}`} ref={ref}>
-            <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-btn--sm" aria-label={`Actions for ${entry.name}`} aria-expanded={open} onClick={(event) => { event.stopPropagation(); setOpen((value) => !value); }}><i className="bx bx-dots-horizontal-rounded" /></button>
-            {open && <div className="ps-dropdown__menu cloud-menu__panel">
+            <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-btn--sm" aria-label={`Actions for ${entry.name}`} aria-expanded={open} onClick={(event) => { event.stopPropagation(); toggle(event.currentTarget); }}><i className="bx bx-dots-horizontal-rounded" /></button>
+            {open && <div className="ps-dropdown__menu cloud-menu__panel" style={place}>
                 {view !== 'folder' && <button type="button" className="ps-dropdown__item" onClick={act(() => navigate('/files/' + where + (entry.folder ? '' : '?open=' + encodeURIComponent(entry.name))))}><i className="bx bx-folder-open" />Show in its folder</button>}
                 {entry.folder
                     ? <a className="ps-dropdown__item" href={dav.zipUrl(entry.path)} onClick={() => setOpen(false)}><i className="bx bx-download" />Download as zip</a>

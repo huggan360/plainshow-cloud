@@ -8,6 +8,9 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCA\PlainShow\Listener\TakenDate;
+use OCP\FilesMetadata\Event\MetadataBackgroundEvent;
+use OCP\FilesMetadata\Event\MetadataLiveEvent;
 
 class Application extends App implements IBootstrap {
     public const APP_ID = 'plainshow';
@@ -22,6 +25,9 @@ class Application extends App implements IBootstrap {
         if (is_file($autoload)) {
             require_once $autoload;
         }
+        // When photos were taken, for the timeline.
+        $context->registerEventListener(MetadataLiveEvent::class, TakenDate::class);
+        $context->registerEventListener(MetadataBackgroundEvent::class, TakenDate::class);
     }
 
     public function boot(IBootContext $context): void {
