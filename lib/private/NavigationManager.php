@@ -215,18 +215,6 @@ class NavigationManager implements INavigationManager {
 		}
 
 		if ($this->userSession->isLoggedIn()) {
-			// Profile
-			$this->add([
-				'type' => 'settings',
-				'id' => 'profile',
-				'order' => 1,
-				'href' => $this->urlGenerator->linkToRoute(
-					'profile.ProfilePage.index',
-					['targetUserId' => $this->userSession->getUser()->getUID()],
-				),
-				'name' => $l->t('View profile'),
-			]);
-
 			// Accessibility settings
 			if ($this->appManager->isEnabledForUser('theming', $this->userSession->getUser())) {
 				$this->add([
@@ -240,16 +228,6 @@ class NavigationManager implements INavigationManager {
 			}
 
 			if ($this->isAdmin()) {
-				// App management
-				$this->add([
-					'type' => 'settings',
-					'id' => 'core_apps',
-					'order' => 5,
-					'href' => $this->urlGenerator->linkToRoute('appstore.Page.viewApps'),
-					'icon' => $this->urlGenerator->imagePath('appstore', 'app-dark.svg'),
-					'name' => $l->t('Apps'),
-				]);
-
 				// Personal settings
 				$this->add([
 					'type' => 'settings',

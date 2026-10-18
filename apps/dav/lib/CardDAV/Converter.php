@@ -70,21 +70,6 @@ class Converter {
 				case IAccountManager::PROPERTY_WEBSITE:
 					$vCard->add(new Text($vCard, 'URL', $property->getValue(), ['X-NC-SCOPE' => $scope]));
 					break;
-				case IAccountManager::PROPERTY_PROFILE_ENABLED:
-					if ($property->getValue()) {
-						$vCard->add(
-							new Text(
-								$vCard,
-								'X-SOCIALPROFILE',
-								$this->urlGenerator->linkToRouteAbsolute('profile.ProfilePage.index', ['targetUserId' => $user->getUID()]),
-								[
-									'TYPE' => 'NEXTCLOUD',
-									'X-NC-SCOPE' => IAccountManager::SCOPE_PUBLISHED
-								]
-							)
-						);
-					}
-					break;
 				case IAccountManager::PROPERTY_PHONE:
 					$vCard->add(new Text($vCard, 'TEL', $property->getValue(), ['TYPE' => 'VOICE', 'X-NC-SCOPE' => $scope]));
 					break;

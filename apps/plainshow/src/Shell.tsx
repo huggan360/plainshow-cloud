@@ -114,7 +114,7 @@ export default function Shell({ children }: { children: ReactNode }) {
                         {accountOpen && (
                             <div className="ps-dropdown__menu ps-dropdown__menu--up">
                                 <a href="https://plainshow.se/account" className="ps-dropdown__item"><i className="bx bx-user" />Account</a>
-                                <Link to="/settings" className="ps-dropdown__item"><i className="bx bx-mobile" />Devices</Link>
+                                <Link to="/settings/devices" className="ps-dropdown__item"><i className="bx bx-mobile" />Devices</Link>
                                 <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? 'Dark theme' : 'Light theme'}</button>
                                 <div className="ps-dropdown__sep" />
                                 <a href={boot.logout} className="ps-dropdown__item"><i className="bx bx-log-out" />Sign out</a>

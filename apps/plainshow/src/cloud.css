@@ -309,3 +309,23 @@
     .cloud-tasks__add { flex-wrap: wrap; }
     .cloud-tasks__due { flex: 1 1 140px; }
 }
+
+/* Settings */
+.cloud-settings__tabs { margin-bottom: 16px; width: fit-content; max-width: 100%; }
+.cloud-settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.cloud-settings__grid > .ps-span-all { grid-column: 1 / -1; }
+.cloud-settings__list { margin: 14px 0 10px; }
+.cloud-settings__meta { flex: none; color: var(--ps-text-soft); font: 600 var(--ps-text-sm) var(--ps-font-ui); font-variant-numeric: tabular-nums; }
+.cloud-settings__steps { display: grid; gap: 10px; margin: 0 0 12px; padding-left: 20px; }
+.cloud-settings__steps li { padding-left: 4px; }
+.cloud-settings__steps .ps-code { word-break: break-all; }
+.cloud-settings__rules ul { display: grid; gap: 4px; margin: 6px 0 0; padding-left: 18px; }
+.cloud-settings__people td, .cloud-settings__jobs td { vertical-align: middle; }
+.cloud-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; }
+.cloud-setting > span:first-child { display: grid; gap: 2px; }
+.cloud-setting.is-disabled { opacity: .55; cursor: default; }
+.cloud-mono { font-family: var(--ps-font-mono); letter-spacing: .04em; }
+.cloud-subhead + .ps-chain { margin-top: 6px; }
+.ps-chain + .cloud-subhead { margin-top: 16px; }
+@media (max-width: 900px) { .cloud-settings__grid { grid-template-columns: 1fr; } }
+.cloud-settings__grid .ps-frame__head { margin-bottom: 14px; }
