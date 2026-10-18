@@ -127,11 +127,13 @@ function Timeline() {
 }
 
 function PhotoTile({ photo, thumb, selected, selecting, onOpen, onToggle }: { photo: Pick<Photo, 'id' | 'name' | 'mime'>; thumb: string; selected: boolean; selecting: boolean; onOpen: () => void; onToggle: () => void }) {
+    const [broken, setBroken] = useState(false);
+    const video = photo.mime.startsWith('video/');
     return (
         <div className={`cloud-photo${selected ? ' is-selected' : ''}`}>
             <button type="button" className="cloud-photo__open" aria-label={photo.name} onClick={selecting ? onToggle : onOpen}>
-                <img src={thumb} alt="" loading="lazy" />
-                {photo.mime.startsWith('video/') && <i className="bx bx-play-circle cloud-photo__video" aria-hidden="true" />}
+                {broken ? <span className="cloud-photo__none"><i className={`bx ${video ? 'bx-movie-play' : 'bx-image'}`} aria-hidden="true" /><span>{photo.name}</span></span> : <img src={thumb} alt="" loading="lazy" onError={() => setBroken(true)} />}
+                {video && !broken && <i className="bx bx-play-circle cloud-photo__video" aria-hidden="true" />}
             </button>
             <button type="button" className="cloud-photo__check" aria-label={selected ? 'Unselect' : 'Select'} aria-pressed={selected} onClick={onToggle}><i className={`bx ${selected ? 'bxs-check-circle' : 'bx-circle'}`} /></button>
         </div>

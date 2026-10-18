@@ -1,6 +1,6 @@
 {
   "src/calendar/Calendar.tsx": {
-    "file": "cloud-Calendar-sMX-CP9f.js",
+    "file": "cloud-Calendar-t3hh8ZuV.js",
     "name": "Calendar",
     "src": "src/calendar/Calendar.tsx",
     "isDynamicEntry": true,
@@ -9,7 +9,7 @@
     ]
   },
   "src/main.tsx": {
-    "file": "cloud-DBrO1Hcx.js",
+    "file": "cloud-BbG0-4W8.js",
     "name": "main",
     "src": "src/main.tsx",
     "isEntry": true,
@@ -20,7 +20,7 @@
     ]
   },
   "src/photos/Photos.tsx": {
-    "file": "cloud-Photos-DBU76C-R.js",
+    "file": "cloud-Photos-C5zPeXgR.js",
     "name": "Photos",
     "src": "src/photos/Photos.tsx",
     "isDynamicEntry": true,
@@ -29,7 +29,7 @@
     ]
   },
   "src/settings/Settings.tsx": {
-    "file": "cloud-Settings-B-GOWSgf.js",
+    "file": "cloud-Settings-BXEVWc4y.js",
     "name": "Settings",
     "src": "src/settings/Settings.tsx",
     "isDynamicEntry": true,
@@ -38,7 +38,7 @@
     ]
   },
   "style.css": {
-    "file": "cloud-PRzMS_kq.css",
+    "file": "cloud-MMb1kD6D.css",
     "src": "style.css"
   }
 }

@@ -171,3 +171,141 @@
     .cloud-months { display: none; }
     .cloud-albums { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 }
+.cloud-photo__none { display: grid; place-content: center; justify-items: center; gap: 6px; width: 100%; height: 100%; padding: 10px; color: var(--ps-text-muted); font: var(--ps-text-xs) var(--ps-font-ui); text-align: center; }
+.cloud-photo__none .bx { font-size: 2.4rem; color: #8e7cf0; }
+.cloud-photo__none span { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+
+/* Calendar */
+.cloud-segment--text button { width: auto; padding: 0 12px; font: 500 var(--ps-text-sm) var(--ps-font-ui); }
+.cloud-dialog-actions--split { width: 100%; align-items: center; flex-wrap: wrap; }
+.cloud-dot { display: inline-block; flex: none; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; background: var(--cal); vertical-align: middle; }
+.cloud-cal__toolbar { gap: 8px; }
+.cloud-cal__steps { display: inline-flex; }
+.cloud-cal__title { margin: 0; font: 600 var(--ps-text-lg) var(--ps-font-title); white-space: nowrap; }
+.cloud-cal__when { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cloud-cal__when .ps-field { min-width: 0; }
+.cloud-cal__notes { white-space: pre-wrap; }
+.cloud-time { flex: 0 0 132px !important; }
+.cloud-form .ps-field { margin-bottom: 0; }
+.cloud-chip { display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; margin-top: 2px; padding: 2px 6px; border: 0; border-radius: 5px; background: color-mix(in srgb, var(--cal) 16%, transparent); color: var(--ps-text); font: 500 var(--ps-text-xs)/1.35 var(--ps-font-ui); text-align: left; text-decoration: none; cursor: pointer; }
+.cloud-chip:hover { background: color-mix(in srgb, var(--cal) 28%, transparent); }
+.cloud-chip--allday { background: var(--cal); color: #fff; }
+.cloud-chip--allday:hover { background: color-mix(in srgb, var(--cal) 85%, #000); }
+.cloud-chip--task { background: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cal) 60%, transparent); }
+.cloud-chip--task .bx { color: var(--cal); font-size: .95rem; }
+.cloud-chip__time { flex: none; color: var(--ps-text-muted); font-variant-numeric: tabular-nums; }
+.cloud-chip__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cloud-month { border: 1px solid var(--ps-panel-border); border-radius: 16px; background: var(--ps-panel); overflow: hidden; }
+.cloud-month__head, .cloud-month__week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cloud-month__head span { padding: 8px 10px; color: var(--ps-text-muted); font: 600 var(--ps-text-xs) var(--ps-font-ui); letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid var(--ps-line); }
+.cloud-month__day { min-height: 116px; padding: 4px 5px 6px; border-right: 1px solid var(--ps-line); border-bottom: 1px solid var(--ps-line); cursor: pointer; overflow: hidden; }
+.cloud-month__day:nth-child(7n) { border-right: 0; }
+.cloud-month__week:last-child .cloud-month__day { border-bottom: 0; }
+.cloud-month__day.is-other { background: color-mix(in srgb, var(--ps-bg) 45%, transparent); }
+.cloud-month__day.is-other .cloud-month__num { color: var(--ps-text-faint); }
+.cloud-month__num { display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 4px; border: 0; border-radius: 13px; background: none; color: var(--ps-text-soft); font: 600 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; }
+.cloud-month__num:hover { background: var(--ps-hover); }
+.cloud-month__day.is-today .cloud-month__num { background: var(--ps-accent); color: var(--ps-accent-fg); }
+.cloud-month__more { display: block; margin-top: 2px; padding: 1px 6px; border: 0; background: none; color: var(--ps-text-muted); font: 600 var(--ps-text-xs) var(--ps-font-ui); cursor: pointer; }
+.cloud-month__more:hover { color: var(--ps-text); }
+
+.cloud-week { display: grid; border: 1px solid var(--ps-panel-border); border-radius: 16px; background: var(--ps-panel); overflow: hidden; }
+.cloud-week__head, .cloud-week__allday, .cloud-week__body { display: grid; grid-template-columns: 56px repeat(var(--days), minmax(0, 1fr)); }
+.cloud-week__head { border-bottom: 1px solid var(--ps-line); }
+.cloud-week__date { display: grid; justify-items: center; gap: 2px; padding: 8px 0; border: 0; background: none; color: var(--ps-text-muted); font: 500 var(--ps-text-xs) var(--ps-font-ui); text-transform: uppercase; letter-spacing: .05em; cursor: pointer; }
+.cloud-week__date strong { display: grid; place-items: center; min-width: 30px; height: 30px; border-radius: 15px; color: var(--ps-text); font: 600 var(--ps-text-lg) var(--ps-font-title); letter-spacing: 0; }
+.cloud-week__date.is-today strong { background: var(--ps-accent); color: var(--ps-accent-fg); }
+.cloud-week__allday { border-bottom: 1px solid var(--ps-line); }
+.cloud-week__allday .cloud-week__gutter { padding: 6px 4px; text-align: right; }
+.cloud-week__allday-col { min-width: 0; padding: 2px 3px 4px; border-left: 1px solid var(--ps-line); }
+.cloud-week__scroll { max-height: calc(100vh - 290px); min-height: 360px; overflow-y: auto; }
+.cloud-week__body { position: relative; background-image: repeating-linear-gradient(to bottom, var(--ps-line) 0 1px, transparent 1px 48px); }
+.cloud-week__hours { position: relative; }
+.cloud-week__hours span { position: absolute; right: 8px; transform: translateY(-50%); color: var(--ps-text-faint); font: var(--ps-text-xs) var(--ps-font-ui); font-variant-numeric: tabular-nums; }
+.cloud-week__col { position: relative; border-left: 1px solid var(--ps-line); cursor: pointer; }
+.cloud-week__col.is-today { background: color-mix(in srgb, var(--ps-accent) 4%, transparent); }
+.cloud-week__now { position: absolute; left: 0; right: 0; z-index: 3; height: 2px; background: var(--ps-red); pointer-events: none; }
+.cloud-week__now::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--ps-red); }
+.cloud-event { position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 1px; padding: 3px 6px; overflow: hidden; border: 0; border-left: 3px solid var(--cal); border-radius: 6px; background: color-mix(in srgb, var(--cal) 22%, var(--ps-panel)); color: var(--ps-text); font: var(--ps-text-xs)/1.3 var(--ps-font-ui); text-align: left; cursor: pointer; }
+.cloud-event:hover { background: color-mix(in srgb, var(--cal) 34%, var(--ps-panel)); z-index: 4; }
+.cloud-event strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.cloud-event span { color: var(--ps-text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cloud-event.is-short { flex-direction: row; gap: 6px; align-items: center; padding-top: 0; padding-bottom: 0; }
+
+.cloud-agenda { display: grid; gap: 14px; }
+.cloud-agenda__day { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 12px 14px; border: 1px solid var(--ps-panel-border); border-radius: 14px; background: var(--ps-panel); }
+.cloud-agenda__day h3 { display: flex; align-items: baseline; gap: 8px; margin: 0; color: var(--ps-text-soft); font: 500 var(--ps-text-sm) var(--ps-font-ui); }
+.cloud-agenda__day h3 strong { color: var(--ps-text); font: 600 var(--ps-text-xl) var(--ps-font-title); }
+.cloud-agenda__day h3.is-today strong { color: var(--ps-accent-text); }
+.cloud-agenda__day ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.cloud-agenda__item { display: grid; grid-template-columns: 130px 10px 1fr auto; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; border: 0; border-radius: 8px; background: none; color: var(--ps-text); font: var(--ps-text-sm) var(--ps-font-ui); text-align: left; cursor: pointer; }
+.cloud-agenda__item:hover { background: var(--ps-hover); }
+.cloud-agenda__time { color: var(--ps-text-muted); font-variant-numeric: tabular-nums; }
+.cloud-agenda__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--cal); }
+.cloud-agenda__text { display: grid; min-width: 0; }
+.cloud-agenda__text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+
+.cloud-cals { display: grid; gap: 1px; padding: 2px 0 6px 30px; }
+.cloud-cals__loading { margin: 6px 12px; }
+.cloud-cals__row { display: flex; align-items: center; border-radius: 8px; }
+.cloud-cals__row:hover { background: var(--ps-hover); }
+.cloud-cals__toggle { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; padding: 6px 4px 6px 12px; border: 0; background: none; color: var(--ps-text-soft); font: 500 var(--ps-text-sm) var(--ps-font-ui); text-align: left; cursor: pointer; }
+.cloud-cals__box { display: grid; place-items: center; flex: none; width: 16px; height: 16px; border: 2px solid var(--cal); border-radius: 5px; color: #fff; font-size: .8rem; }
+.cloud-cals__box.is-on { background: var(--cal); }
+.cloud-cals__name { display: grid; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cloud-cals__owner { color: var(--ps-text-faint); font-size: var(--ps-text-xs); font-weight: 400; }
+.cloud-cals__more { display: grid; place-items: center; width: 28px; height: 28px; margin-right: 4px; border: 0; border-radius: 7px; background: none; color: var(--ps-text-muted); opacity: 0; cursor: pointer; }
+.cloud-cals__row:hover .cloud-cals__more, .cloud-cals__more:focus-visible { opacity: 1; }
+.cloud-cals__more:hover { background: var(--ps-btn-bg); color: var(--ps-text); }
+@media (hover: none) { .cloud-cals__more { opacity: 1; } }
+.cloud-cals__add { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border: 0; border-radius: 8px; background: none; color: var(--ps-text-muted); font: 500 var(--ps-text-sm) var(--ps-font-ui); text-align: left; cursor: pointer; }
+.cloud-cals__add:hover { background: var(--ps-hover); color: var(--ps-text); }
+.cloud-cals .ps-nav__item--sub { margin-left: -30px; width: calc(100% + 30px); }
+.cloud-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.cloud-swatch { width: 28px; height: 28px; padding: 0; border: 2px solid transparent; border-radius: 50%; background: var(--cal); cursor: pointer; }
+.cloud-swatch.is-active { box-shadow: 0 0 0 2px var(--ps-panel), 0 0 0 4px var(--cal); }
+.cloud-swatch--pick { overflow: hidden; border: 1px solid var(--ps-line); background: none; }
+.cloud-swatch--pick::-webkit-color-swatch-wrapper { padding: 0; }
+.cloud-swatch--pick::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.cloud-select--small { width: auto; min-height: 32px; padding-top: 4px; padding-bottom: 4px; font-size: var(--ps-text-sm); }
+
+/* Tasks */
+.cloud-tasks__lists { margin-bottom: 12px; }
+.cloud-tasks__lists .ps-tab { display: inline-flex; align-items: center; gap: 2px; }
+.cloud-tasks__add { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--ps-line); }
+.cloud-tasks__add > .bx { color: var(--ps-text-muted); font-size: 1.3rem; }
+.cloud-tasks__add .ps-input:first-of-type { flex: 1; min-width: 0; }
+.cloud-tasks__due { flex: 0 0 160px; }
+.cloud-tasks__list { margin: 0; padding: 4px 0; list-style: none; }
+.cloud-tasks__none { padding: 18px; text-align: center; }
+.cloud-tasks__done-toggle { display: flex; align-items: center; gap: 6px; width: 100%; padding: 10px 14px; border: 0; border-top: 1px solid var(--ps-line); background: none; color: var(--ps-text-muted); font: 600 var(--ps-text-sm) var(--ps-font-ui); text-align: left; cursor: pointer; }
+.cloud-task { display: flex; align-items: center; gap: 6px; padding: 2px 14px 2px 8px; }
+.cloud-task:hover { background: var(--ps-hover); }
+.cloud-task__check { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; background: none; color: var(--cal); font-size: 1.35rem; cursor: pointer; }
+.cloud-task__check:disabled { cursor: default; opacity: .6; }
+.cloud-task__body { display: grid; flex: 1; min-width: 0; padding: 8px 0; border: 0; background: none; color: var(--ps-text); font: 500 var(--ps-text-md) var(--ps-font-ui); text-align: left; cursor: pointer; }
+.cloud-task__title, .cloud-task__notes { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cloud-task__notes { color: var(--ps-text-muted); font-size: var(--ps-text-xs); font-weight: 400; }
+.cloud-task.is-done .cloud-task__title { color: var(--ps-text-muted); text-decoration: line-through; }
+.cloud-task__due { display: inline-flex; align-items: center; gap: 4px; flex: none; color: var(--ps-text-muted); font: 500 var(--ps-text-xs) var(--ps-font-ui); }
+.cloud-task__due.is-late { color: var(--ps-red); }
+
+@media (max-width: 720px) {
+    .cloud-cal__title { order: -1; width: 100%; font-size: var(--ps-text-md); }
+    .cloud-cal__toolbar .cloud-toolbar__spacer { display: none; }
+    .cloud-month__head span { padding: 6px 4px; text-align: center; }
+    .cloud-month__day { min-height: 76px; padding: 2px; }
+    .cloud-month__num { min-width: 22px; height: 22px; font-size: var(--ps-text-xs); }
+    .cloud-chip { padding: 1px 3px; font-size: 10px; border-radius: 3px; }
+    .cloud-chip__time { display: none; }
+    .cloud-week__head, .cloud-week__allday, .cloud-week__body { grid-template-columns: 40px repeat(var(--days), minmax(0, 1fr)); }
+    .cloud-week__hours span { right: 4px; font-size: 10px; }
+    .cloud-week--week .cloud-event span { display: none; }
+    .cloud-week--week .cloud-event { padding: 2px 3px; font-size: 10px; }
+    .cloud-agenda__day { grid-template-columns: 1fr; gap: 4px; }
+    .cloud-agenda__item { grid-template-columns: 92px 10px 1fr auto; gap: 8px; }
+    .cloud-cal__when { grid-template-columns: 1fr; }
+    .cloud-tasks__add { flex-wrap: wrap; }
+    .cloud-tasks__due { flex: 1 1 140px; }
+}
