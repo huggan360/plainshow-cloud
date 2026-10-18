@@ -89,6 +89,7 @@ class PageController extends Controller {
     private function bundle(string $app): array {
         $manifest = json_decode((string)@file_get_contents("$app/js/.vite/manifest.json"), true) ?: [];
         $entry = $manifest['src/main.tsx'] ?? [];
-        return ['js' => $entry['file'] ?? 'cloud.js', 'css' => $entry['css'][0] ?? null];
+        // With one stylesheet for everything, Vite lists it on its own as style.css.
+        return ['js' => $entry['file'] ?? 'cloud.js', 'css' => $entry['css'][0] ?? $manifest['style.css']['file'] ?? null];
     }
 }
