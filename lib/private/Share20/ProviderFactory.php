@@ -204,7 +204,12 @@ class ProviderFactory implements IProviderFactory {
 
 	#[\Override]
 	public function getAllProviders() {
-		$shares = [$this->defaultShareProvider(), $this->federatedShareProvider()];
+		$shares = [$this->defaultShareProvider()];
+		// PlainShow Cloud has no federated sharing: only add it if it is there.
+		$federated = $this->federatedShareProvider();
+		if ($federated !== null) {
+			$shares[] = $federated;
+		}
 		$shareByMail = $this->getShareByMailProvider();
 		if ($shareByMail !== null) {
 			$shares[] = $shareByMail;

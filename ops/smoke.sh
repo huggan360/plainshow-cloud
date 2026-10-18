@@ -29,6 +29,7 @@ printf 'one' > "$tmp/a.txt"; check "upload" 201 -u "$A" -T "$tmp/a.txt" "$D/a.tx
 printf 'two' > "$tmp/a.txt"; check "overwrite (makes a version)" 204 -u "$A" -T "$tmp/a.txt" "$D/a.txt"
 check "download" 200 -u "$A" "$D/a.txt"
 check "list" 207 -u "$A" -X PROPFIND -H "Depth: 1" "$D"
+check "list with sharing state (the web app asks)" 207 -u "$A" -X PROPFIND -H "Depth: 1" "$H/remote.php/dav/files/$USER1/" -d '<?xml version="1.0"?><d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns"><d:prop><oc:share-types/><oc:permissions/><nc:has-preview/><oc:favorite/></d:prop></d:propfind>'
 check "old webdav address" 207 -u "$A" -X PROPFIND -H "Depth: 0" "$H/remote.php/webdav/"
 check "copy" 201 -u "$A" -X COPY -H "Destination: $D/b.txt" "$D/a.txt"
 check "move" 201 -u "$A" -X MOVE -H "Destination: $D/c.txt" "$D/b.txt"
