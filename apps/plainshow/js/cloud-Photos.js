@@ -1,0 +1,1 @@
+import{j as s,P as i,E as o}from"./cloud.js";function e({path:t}){return s.jsxs("div",{children:[s.jsx(i,{title:"Photos"}),s.jsxs(o,{icon:"bx-hard-hat",children:["Coming in this pass (",t,")."]})]})}export{e as default};
