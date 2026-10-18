@@ -72,7 +72,8 @@ class PageController extends Controller {
                 'quota' => ['used' => $home->getSize(), 'total' => $quota === FileInfo::SPACE_UNLIMITED ? null : $quota],
                 'logout' => $this->urls->linkToRoute('core.login.logout', ['requesttoken' => Util::callRegister()]),
             ],
-            'version' => substr(md5((string)@filemtime("$app/js/cloud.js") . (string)@filemtime("$app/ui/css/plainshow.css")), 0, 10),
+            'version' => substr(md5((string)@filemtime("$app/ui/css/plainshow.css")), 0, 10),
+            'bundle' => $this->bundle($app),
         ], TemplateResponse::RENDER_AS_BLANK);
 
         $policy = new ContentSecurityPolicy();
@@ -82,5 +83,12 @@ class PageController extends Controller {
         $policy->addAllowedFrameDomain('blob:');
         $response->setContentSecurityPolicy($policy);
         return $response;
+    }
+
+    /** The built script and stylesheet, from Vite's manifest. */
+    private function bundle(string $app): array {
+        $manifest = json_decode((string)@file_get_contents("$app/js/.vite/manifest.json"), true) ?: [];
+        $entry = $manifest['src/main.tsx'] ?? [];
+        return ['js' => $entry['file'] ?? 'cloud.js', 'css' => $entry['css'][0] ?? null];
     }
 }

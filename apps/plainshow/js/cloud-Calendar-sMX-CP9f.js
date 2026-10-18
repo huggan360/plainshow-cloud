@@ -1,0 +1,1 @@
+import{j as a,P as t,E as e}from"./cloud-DBrO1Hcx.js";function n({path:s}){return a.jsxs("div",{children:[a.jsx(t,{title:"Calendar"}),a.jsxs(e,{icon:"bx-hard-hat",children:["Coming in this pass (",s,")."]})]})}export{n as default};

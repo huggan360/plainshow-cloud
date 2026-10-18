@@ -1,0 +1,1 @@
+import{j as s,P as i,E as e}from"./cloud-DBrO1Hcx.js";function a({path:t}){return s.jsxs("div",{children:[s.jsx(i,{title:"Settings"}),s.jsxs(e,{icon:"bx-hard-hat",children:["Coming in this pass (",t,")."]})]})}export{a as default};

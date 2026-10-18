@@ -16,7 +16,7 @@ $nonce = \OC::$server->get(\OC\Security\CSP\ContentSecurityPolicyNonceManager::c
     <link rel="preload" href="<?php p($base); ?>/ui/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="<?php p($base); ?>/ui/css/boxicons.css?v=<?php p($v); ?>">
     <link rel="stylesheet" href="<?php p($base); ?>/ui/css/plainshow.css?v=<?php p($v); ?>">
-    <link rel="stylesheet" href="<?php p($base); ?>/js/cloud.css?v=<?php p($v); ?>">
+    <?php if ($_['bundle']['css']): ?><link rel="stylesheet" href="<?php p($base); ?>/js/<?php p($_['bundle']['css']); ?>"><?php endif; ?>
     <script nonce="<?php p($nonce); ?>">try { var t = localStorage.getItem('plainshow-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
 </head>
 <body class="ps cloud">
@@ -24,6 +24,6 @@ $nonce = \OC::$server->get(\OC\Security\CSP\ContentSecurityPolicyNonceManager::c
 <div id="cloud"></div>
 <script type="application/json" id="cloud-boot"><?php print_unescaped(json_encode($_['boot'] + ['assets' => $base, 'version' => $v], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES)); ?></script>
 <script nonce="<?php p($nonce); ?>" src="<?php p($base); ?>/ui/js/backdrop.js?v=<?php p($v); ?>" defer></script>
-<script nonce="<?php p($nonce); ?>" type="module" src="<?php p($base); ?>/js/cloud.js?v=<?php p($v); ?>"></script>
+<script nonce="<?php p($nonce); ?>" type="module" src="<?php p($base); ?>/js/<?php p($_['bundle']['js']); ?>"></script>
 </body>
 </html>

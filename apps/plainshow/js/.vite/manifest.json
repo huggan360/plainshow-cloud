@@ -1,0 +1,44 @@
+{
+  "src/calendar/Calendar.tsx": {
+    "file": "cloud-Calendar-sMX-CP9f.js",
+    "name": "Calendar",
+    "src": "src/calendar/Calendar.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.tsx"
+    ]
+  },
+  "src/main.tsx": {
+    "file": "cloud-DBrO1Hcx.js",
+    "name": "main",
+    "src": "src/main.tsx",
+    "isEntry": true,
+    "dynamicImports": [
+      "src/photos/Photos.tsx",
+      "src/calendar/Calendar.tsx",
+      "src/settings/Settings.tsx"
+    ]
+  },
+  "src/photos/Photos.tsx": {
+    "file": "cloud-Photos-DBU76C-R.js",
+    "name": "Photos",
+    "src": "src/photos/Photos.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.tsx"
+    ]
+  },
+  "src/settings/Settings.tsx": {
+    "file": "cloud-Settings-B-GOWSgf.js",
+    "name": "Settings",
+    "src": "src/settings/Settings.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.tsx"
+    ]
+  },
+  "style.css": {
+    "file": "cloud-PRzMS_kq.css",
+    "src": "style.css"
+  }
+}
