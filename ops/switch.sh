@@ -54,13 +54,14 @@ occ theming:config logo "$DIR/apps/plainshow/img/plainshow-icon.png"
 occ theming:config logoheader "$DIR/apps/plainshow/img/plainshow-logo.png"
 occ theming:config favicon "$DIR/apps/plainshow/img/plainshow-icon.png"
 
-step "Signing in is PlainShow's: Nextcloud passwords stop working, device passwords stay"
+step "Signing in is PlainShow's: Nextcloud passwords stop working and everyone signs in again"
 occ config:app:set user_oidc allow_multiple_user_backends --value=0
 occ config:system:set token_auth_enforced --value=true --type=boolean
 for user in $(occ user:list --output=json | python3 -c "import json,sys;print(' '.join(json.load(sys.stdin)))"); do
     OC_PASS=$(openssl rand -base64 48) sudo -E -u www-data php occ user:resetpassword --password-from-env "$user" >/dev/null
 done
 echo "Every Nextcloud password replaced with a random one."
-# Device passwords of the Talk app are of no use without Talk.
-sudo mariadb "$(occ config:system:get dbname)" -e "DELETE FROM $(occ config:system:get dbtableprefix)authtoken WHERE name LIKE '%Nextcloud Talk%' OR name LIKE '%Nextcloud-Talk%'"
+# A clean start: every device and browser signs in again, through PlainShow.
+sudo mariadb "$(occ config:system:get dbname)" -e "DELETE FROM $(occ config:system:get dbtableprefix)authtoken"
+echo "Everyone is signed out; devices sign in again with PlainShow."
 occ status
