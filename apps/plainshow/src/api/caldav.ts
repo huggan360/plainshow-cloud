@@ -1,6 +1,6 @@
 import ICAL from 'ical.js';
 import { boot } from '../boot';
-import { CloudError, request } from './http';
+import { api, CloudError, request } from './http';
 
 /** One calendar or task list, as CalDAV describes it. */
 export type Calendar = {
@@ -13,6 +13,7 @@ export type Calendar = {
     enabled: boolean;       // shown (stored on the server, like the old Calendar app did)
     owner: string | null;   // someone else's, shared with you
     birthdays: boolean;
+    subscription: boolean;
 };
 
 /** One occurrence of an event (repeats come one by one, from the server). */
@@ -124,12 +125,13 @@ function toIcal(date: Date, allDay: boolean, zone?: ICAL.Timezone | null): ICAL.
 
 export async function calendars(): Promise<Calendar[]> {
     const nodes = await multistatus(await dav(home(), 'PROPFIND', `<?xml version="1.0"?>
-<d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
+<d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/" xmlns:cs="http://calendarserver.org/ns/" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
 <d:prop><d:displayname/><d:resourcetype/><a:calendar-color/><a:calendar-order/><c:supported-calendar-component-set/><d:current-user-privilege-set/><nc:owner-displayname/><oc:owner-principal/><oc:calendar-enabled/></d:prop>
 </d:propfind>`, { Depth: '1' }));
     const list = nodes.flatMap((node) => {
         const href = hrefOf(node);
-        if (!node.getElementsByTagNameNS(NS.c, 'calendar').length || /\/(inbox|outbox|trashbin)\/$/.test(href)) return [];
+        const subscription = node.getElementsByTagNameNS('http://calendarserver.org/ns/', 'subscribed').length > 0;
+        if ((!node.getElementsByTagNameNS(NS.c, 'calendar').length && !subscription) || /\/(inbox|outbox|trashbin)\/$/.test(href)) return [];
         const components = Array.from(node.getElementsByTagNameNS(NS.c, 'comp')).map((comp) => comp.getAttribute('name'));
         const privileges = Array.from(node.getElementsByTagNameNS(NS.d, 'privilege')).map((p) => p.firstElementChild?.localName);
         const ownerPrincipal = text(node, NS.oc, 'owner-principal').replace(/\/$/, '');
@@ -141,14 +143,26 @@ export async function calendars(): Promise<Calendar[]> {
             color: (text(node, NS.a, 'calendar-color') || '#FC5000').slice(0, 7),
             events: components.length === 0 || components.includes('VEVENT'),
             tasks: components.includes('VTODO'),
-            writable: !birthdays && (privileges.includes('write') || privileges.includes('all') || privileges.includes('write-content')),
+            writable: !birthdays && !subscription && (privileges.includes('write') || privileges.includes('all') || privileges.includes('write-content')),
             enabled: text(node, NS.oc, 'calendar-enabled') !== '0',
             owner: mine ? null : text(node, NS.nc, 'owner-displayname') || ownerPrincipal.split('/').pop() || null,
             birthdays,
+            subscription,
             order: Number(text(node, NS.a, 'calendar-order')) || 0,
         }];
     });
-    return list.sort((a, b) => Number(!!a.owner) - Number(!!b.owner) || Number(a.birthdays) - Number(b.birthdays) || a.order - b.order || a.name.localeCompare(b.name))
+    const unique = new Map<string, (typeof list)[number]>();
+    list.forEach((calendar) => {
+        const known = unique.get(calendar.href);
+        unique.set(calendar.href, known ? {
+            ...known, ...calendar,
+            events: known.events || calendar.events,
+            tasks: known.tasks || calendar.tasks,
+            subscription: known.subscription || calendar.subscription,
+            writable: known.writable && calendar.writable,
+        } : calendar);
+    });
+    return [...unique.values()].sort((a, b) => Number(!!a.owner) - Number(!!b.owner) || Number(a.birthdays) - Number(b.birthdays) || a.order - b.order || a.name.localeCompare(b.name))
         .map(({ order: _order, ...calendar }) => calendar);
 }
 
@@ -158,6 +172,16 @@ export async function createCalendar(name: string, color: string, kind: 'events'
 <d:mkcol xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/">
 <d:set><d:prop><d:resourcetype><d:collection/><c:calendar/></d:resourcetype><d:displayname>${escapeXml(name)}</d:displayname><a:calendar-color>${color}</a:calendar-color>
 <c:supported-calendar-component-set><c:comp name="${kind === 'tasks' ? 'VTODO' : 'VEVENT'}"/></c:supported-calendar-component-set></d:prop></d:set></d:mkcol>`);
+}
+
+export async function subscribeCalendar(name: string, source: string, color: string): Promise<void> {
+    const url = new URL(source);
+    if (!['http:', 'https:', 'webcal:'].includes(url.protocol)) throw new Error('Use a calendar subscription link.');
+    if (url.protocol === 'webcal:') url.protocol = 'https:';
+    const slug = name.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'subscription';
+    await dav(`${home()}${slug}-${Math.random().toString(36).slice(2, 7)}/`, 'MKCOL', `<?xml version="1.0"?>
+<d:mkcol xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:a="http://apple.com/ns/ical/">
+<d:set><d:prop><d:resourcetype><d:collection/><cs:subscribed/></d:resourcetype><d:displayname>${escapeXml(name)}</d:displayname><cs:source><d:href>${escapeXml(url.toString())}</d:href></cs:source><a:calendar-color>${color}</a:calendar-color><a:refreshrate>PT1H</a:refreshrate></d:prop></d:set></d:mkcol>`);
 }
 
 export async function updateCalendar(calendar: Calendar, changes: { name?: string; color?: string; enabled?: boolean }): Promise<void> {
@@ -175,20 +199,22 @@ export async function deleteCalendar(calendar: Calendar): Promise<void> {
     await dav(calendar.href, 'DELETE');
 }
 
-export type CalendarShare = { id: string; name: string; write: boolean };
+export type CalendarShare = { id: string; name: string; write: boolean; group: boolean };
 
 export async function calendarShares(calendar: Calendar): Promise<CalendarShare[]> {
     const nodes = await multistatus(await dav(calendar.href, 'PROPFIND', '<?xml version="1.0"?><d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns"><d:prop><oc:invite/></d:prop></d:propfind>', { Depth: '0' }));
-    return Array.from(nodes[0]?.getElementsByTagNameNS(NS.oc, 'user') ?? []).flatMap((user) => {
+    const people = [...Array.from(nodes[0]?.getElementsByTagNameNS(NS.oc, 'user') ?? []), ...Array.from(nodes[0]?.getElementsByTagNameNS(NS.oc, 'group') ?? [])];
+    return people.flatMap((user) => {
         const principal = text(user, NS.d, 'href');
-        const id = decodeURIComponent(principal.match(/principals\/users\/([^/]+)/)?.[1] ?? '');
+        const match = principal.match(/principals\/(users|groups)\/([^/]+)/);
+        const id = decodeURIComponent(match?.[2] ?? '');
         if (!id) return [];
-        return [{ id, name: text(user, NS.oc, 'common-name') || id, write: user.getElementsByTagNameNS(NS.oc, 'read-write').length > 0 }];
+        return [{ id, name: text(user, NS.oc, 'common-name') || id, write: user.getElementsByTagNameNS(NS.oc, 'read-write').length > 0, group: match?.[1] === 'groups' }];
     });
 }
 
-export async function shareCalendar(calendar: Calendar, person: string, access: 'read' | 'write' | null): Promise<void> {
-    const principal = `<d:href>principal:principals/users/${escapeXml(person)}</d:href>`;
+export async function shareCalendar(calendar: Calendar, person: string, access: 'read' | 'write' | null, group = false): Promise<void> {
+    const principal = `<d:href>principal:principals/${group ? 'groups' : 'users'}/${escapeXml(person)}</d:href>`;
     const body = access === null
         ? `<oc:remove>${principal}</oc:remove>`
         : `<oc:set>${principal}${access === 'write' ? '<oc:read-write/>' : ''}</oc:set>`;
@@ -198,7 +224,7 @@ export async function shareCalendar(calendar: Calendar, person: string, access: 
 /* ---------- Events ---------- */
 
 /** Events between two moments, repeats included (the server expands them). */
-export async function occurrences(calendar: Calendar, from: Date, to: Date): Promise<Occurrence[]> {
+async function queryOccurrences(calendar: Calendar, from: Date, to: Date): Promise<Occurrence[]> {
     const nodes = await multistatus(await dav(calendar.href, 'REPORT', `<?xml version="1.0"?>
 <c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
 <d:prop><d:getetag/><c:calendar-data><c:expand start="${utc(from)}" end="${utc(to)}"/></c:calendar-data></d:prop>
@@ -228,6 +254,63 @@ export async function occurrences(calendar: Calendar, from: Date, to: Date): Pro
         } catch { /* one broken event must not hide the rest */ }
     });
     return out;
+}
+
+type SubscriptionObject = { href: string; etag: string; data: string };
+
+function occurrence(event: ICAL.Event, startTime: ICAL.Time, href: string, etag: string, calendar: Calendar, recurrenceId: number | null): Occurrence {
+    const start = fromIcal(startTime);
+    const duration = event.duration?.toSeconds() ?? 0;
+    let end = new Date(start.getTime() + duration * 1000);
+    if (end <= start && startTime.isDate) end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+    return {
+        key: `${href}#${recurrenceId ?? ''}`,
+        href, etag, calendar, uid: event.uid,
+        recurrenceId,
+        title: event.summary || 'Busy', location: event.location || '', notes: event.description || '',
+        start, end, allDay: startTime.isDate,
+    };
+}
+
+function subscriptionOccurrences(object: SubscriptionObject, calendar: Calendar, from: Date, to: Date): Occurrence[] {
+    const out: Occurrence[] = [];
+    try {
+        const vcal = parse(object.data);
+        const components = vcal.getAllSubcomponents('vevent');
+        const masters = components.filter((component) => !component.getFirstPropertyValue('recurrence-id'));
+        const exceptions = components.filter((component) => component.getFirstPropertyValue('recurrence-id'));
+        for (const component of masters) {
+            const event = new ICAL.Event(component);
+            if (!event.startDate) continue;
+            exceptions.forEach((exception) => {
+                try { event.relateException(new ICAL.Event(exception)); } catch { /* ignore a malformed exception */ }
+            });
+            if (!event.isRecurring()) {
+                const item = occurrence(event, event.startDate, calendar.href + object.href, object.etag, calendar, null);
+                if (item.start < to && item.end > from) out.push(item);
+                continue;
+            }
+            const iterator = event.iterator(ICAL.Time.fromJSDate(from, true));
+            for (let next = iterator.next(); next; next = iterator.next()) {
+                const start = fromIcal(next);
+                if (start >= to) break;
+                const details = event.getOccurrenceDetails(next);
+                const item = occurrence(details.item, details.startDate, calendar.href + object.href, object.etag, calendar, start.getTime());
+                if (item.end > from) out.push(item);
+            }
+        }
+    } catch { /* one broken subscription object must not hide the rest */ }
+    return out;
+}
+
+async function cachedSubscriptionOccurrences(calendar: Calendar, from: Date, to: Date): Promise<Occurrence[]> {
+    const uri = decodeURIComponent(calendar.href.split('/').filter(Boolean).pop() || '');
+    const response = await api<{ objects: SubscriptionObject[] }>(`/api/calendar/subscriptions/${encodeURIComponent(uri)}/objects`);
+    return response.objects.flatMap((object) => subscriptionOccurrences(object, calendar, from, to));
+}
+
+export async function occurrences(calendar: Calendar, from: Date, to: Date): Promise<Occurrence[]> {
+    return calendar.subscription ? cachedSubscriptionOccurrences(calendar, from, to) : queryOccurrences(calendar, from, to);
 }
 
 /** The stored event, repeats unexpanded, for editing. */

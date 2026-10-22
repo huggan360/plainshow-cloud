@@ -30,13 +30,13 @@ export function navigate(path: string, replace = false) {
 window.addEventListener('popstate', () => listeners.forEach((listener) => listener()));
 
 export function usePath(): string {
-    const [path, setPath] = useState(currentPath);
+    const [, setLocation] = useState(() => window.location.pathname + window.location.search);
     useEffect(() => {
-        const update = () => setPath(currentPath());
+        const update = () => setLocation(window.location.pathname + window.location.search);
         listeners.add(update);
         return () => { listeners.delete(update); };
     }, []);
-    return path;
+    return currentPath();
 }
 
 export function useQuery(): URLSearchParams {

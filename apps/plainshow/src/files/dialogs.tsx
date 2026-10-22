@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Entry, Tag, Version, addTag, allTags, list, removeTag, restoreVersion, tagsOf, versions } from '../api/dav';
 import { formatBytes } from '../api/http';
-import { PERMISSION, Share, Sharee, findPeople, shareLink, shareWith, sharesOf, unshare, updateShare } from '../api/shares';
+import { PERMISSION, Share, Sharee, shareLink, shareWith, sharesOf, unshare, updateShare } from '../api/shares';
+import { PeoplePicker, plainShowSharee } from '../PeoplePicker';
 import { failed, toast } from '../toast';
 import { Badge, Button, Empty, Field, Modal, Switch, relativeTime } from '../ui';
 
@@ -65,23 +66,16 @@ function permissionsLabel(share: Share): string {
 /** Share with people who have Cloud, or by a public link with a password and an end date. */
 export function ShareDialog({ entry, onClose, onChanged }: { entry: Entry; onClose: () => void; onChanged: () => void }) {
     const [shares, setShares] = useState<Share[] | null>(null);
-    const [search, setSearch] = useState('');
-    const [found, setFound] = useState<Sharee[]>([]);
     const [edit, setEdit] = useState(false);
     const canShare = entry.permissions.includes('R');
     const load = () => sharesOf(entry.path).then(setShares).catch((error) => { failed(error); setShares([]); });
     useEffect(() => { void load(); }, [entry.path]);
-    useEffect(() => {
-        if (search.trim().length < 1) { setFound([]); return; }
-        const timer = window.setTimeout(() => findPeople(search.trim(), entry.folder ? 'folder' : 'file').then(setFound).catch(() => setFound([])), 250);
-        return () => window.clearTimeout(timer);
-    }, [search, entry]);
 
     const write = entry.folder ? PERMISSION.read | PERMISSION.update | PERMISSION.create | PERMISSION.delete : PERMISSION.read | PERMISSION.update;
     const add = async (sharee: Sharee) => {
         try {
             await shareWith(entry.path, sharee.value.shareWith, edit ? write : PERMISSION.read, sharee.value.shareType);
-            setSearch(''); setFound([]); await load(); onChanged();
+            await load(); onChanged();
             toast(`Shared with ${sharee.label}.`);
         } catch (error) { failed(error); }
     };
@@ -93,16 +87,12 @@ export function ShareDialog({ entry, onClose, onChanged }: { entry: Entry; onClo
             {!canShare && <p className="ps-muted">You cannot share this; it was shared with you without permission to share it on.</p>}
             {canShare && <div className="ps-stack">
                 <div className="cloud-share-add">
-                    <input className="ps-input" placeholder="Name of someone with Cloud" value={search} onChange={(event) => setSearch(event.target.value)} aria-label="Share with" />
-                    <label className="cloud-inline-switch"><Switch checked={edit} onChange={setEdit} label="Can edit" />Can edit</label>
+                    <PeoplePicker itemType={entry.folder ? 'folder' : 'file'} onPick={add} filter={plainShowSharee} />
+                    <div className="cloud-share-access">
+                        <span><strong>Access for new people</strong><small>{edit ? 'They can change this item.' : 'They can only view this item.'}</small></span>
+                        <label className="cloud-inline-switch"><Switch checked={edit} onChange={setEdit} label="Can edit" />Can edit</label>
+                    </div>
                 </div>
-                {found.length > 0 && <ul className="ps-chain">{found.map((sharee) => (
-                    <li key={sharee.value.shareType + sharee.value.shareWith}><button type="button" className="ps-row cloud-picker__row" onClick={() => add(sharee)}>
-                        <span className="ps-row__icon"><i className={`bx ${sharee.value.shareType === 1 ? 'bx-group' : 'bx-user'}`} /></span>
-                        <span className="ps-row__body"><span className="ps-row__title">{sharee.label}</span>{sharee.shareWithDisplayNameUnique && <span className="ps-row__meta">{sharee.shareWithDisplayNameUnique}</span>}</span>
-                        <i className="bx bx-plus" />
-                    </button></li>
-                ))}</ul>}
 
                 <h3 className="cloud-subhead">People</h3>
                 {shares === null ? <span className="ps-loader" /> : people.length === 0 ? <p className="ps-muted ps-small">Not shared with anyone yet.</p> : (

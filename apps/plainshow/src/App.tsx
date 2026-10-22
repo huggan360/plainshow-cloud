@@ -1,6 +1,7 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import { can } from './boot';
 import Files, { Trash } from './files/Files';
-import { usePath } from './router';
+import { navigate, usePath } from './router';
 import Shell from './Shell';
 import { Empty } from './ui';
 
@@ -23,12 +24,29 @@ function Page({ path }: { path: string }) {
     return <Empty icon="bx-map">Nothing lives at this address.</Empty>;
 }
 
+function requiredCapability(path: string): string | null {
+    if (/^\/(files|recent|favorites|shared|trash)/.test(path) || path === '/') return 'cloud.files.view';
+    if (path.startsWith('/photos')) return 'cloud.photos.view';
+    if (path.startsWith('/calendar')) return 'cloud.calendar.view';
+    return null;
+}
+
+function firstAvailablePage(): string {
+    if (can('cloud.files.view')) return '/';
+    if (can('cloud.calendar.view')) return '/calendar';
+    if (can('cloud.photos.view')) return '/photos';
+    return '/settings';
+}
+
 export default function App() {
     const path = usePath();
+    const required = requiredCapability(path);
+    const denied = required !== null && !can(required);
+    useEffect(() => { if (denied) navigate(firstAvailablePage(), true); }, [denied, path]);
     return (
         <Shell>
             <Suspense fallback={<div className="cloud-loading"><span className="ps-loader" /></div>}>
-                <Page path={path} />
+                {denied ? <div className="cloud-loading"><span className="ps-loader" /></div> : <Page path={path} />}
             </Suspense>
         </Shell>
     );

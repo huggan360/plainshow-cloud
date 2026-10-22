@@ -93,3 +93,19 @@ test('editing an imported event preserves custom repeats, time zone, alarms and 
     assert.equal(saved.body.match(/BEGIN:VALARM/g).length, 2);
     assert.match(saved.body, /SUMMARY:Renamed/);
 });
+
+test('calendar shares use group principals for PlainShow groups', async () => {
+    const calls = [];
+    const calendar = load('src/api/caldav.ts', {
+        '../boot': { boot: { webroot: '', user: { id: 'alice' } } },
+        'ical.js': { default: {} },
+        './http': { CloudError: Error, request: async (url, options) => { calls.push({ url, ...options }); return { ok: true }; } },
+    });
+    const item = { href: '/remote.php/dav/calendars/alice/family/' };
+    await calendar.shareCalendar(item, 'ps-42', 'write', true);
+    await calendar.shareCalendar(item, 'ps-42', null, true);
+    await calendar.shareCalendar(item, 'bob', 'read');
+    assert.match(calls[0].body, /<oc:set><d:href>principal:principals\/groups\/ps-42<\/d:href><oc:read-write\/><\/oc:set>/);
+    assert.match(calls[1].body, /<oc:remove><d:href>principal:principals\/groups\/ps-42<\/d:href><\/oc:remove>/);
+    assert.match(calls[2].body, /principal:principals\/users\/bob/);
+});

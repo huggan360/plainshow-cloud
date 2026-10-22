@@ -6,7 +6,7 @@ export type Boot = {
     assets: string;
     version: string;
     requestToken: string;
-    user: { id: string; name: string; email: string | null; admin: boolean; avatar: string };
+    user: { id: string; name: string; email: string | null; admin: boolean; avatar: string; services: string[]; capabilities: string[] };
     quota: { used: number; total: number | null };
     logout: string;
     /** On a share link's page: the link. */
@@ -18,3 +18,7 @@ export type Boot = {
 };
 
 export const boot: Boot = JSON.parse(document.getElementById('cloud-boot')?.textContent || '{}');
+
+export function can(capability: string): boolean {
+    return boot.user.capabilities?.includes('*') || boot.user.capabilities?.includes(capability);
+}

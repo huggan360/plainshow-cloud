@@ -1,10 +1,11 @@
-import { DragEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, DragEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import * as dav from '../api/dav';
 import { Entry } from '../api/dav';
 import { formatBytes } from '../api/http';
 import { Share, sharedByMe, sharedWithMe } from '../api/shares';
 import { fileRoute, Link, navigate } from '../router';
-import { PageHead, useOutside } from '../Shell';
+import { PageHead } from '../Shell';
 import { failed, toast } from '../toast';
 import { Button, Empty, Frame, relativeTime } from '../ui';
 import { FolderDialog, NameDialog, ShareDialog, TagsDialog, VersionsDialog } from './dialogs';
@@ -251,7 +252,7 @@ function Row({ entry, view, selected, onOpen, onSelect, onDropInto, onUploadInto
             <td>
                 <button type="button" className="cloud-name" onClick={onOpen}>
                     <span className="cloud-name__icon"><Thumb entry={entry} size={64} /></span>
-                    <span className="cloud-name__text">{entry.name}{view !== 'folder' && entry.path.includes('/') && <span className="cloud-name__where">{entry.path.split('/').slice(0, -1).join('/')}</span>}</span>
+                    <span className="cloud-name__text"><span className="cloud-name__title">{entry.name}</span>{view === 'with-you' && <span className="cloud-name__where"><i className="bx bx-link" /> Shared by {entry.owner}</span>}{view !== 'folder' && view !== 'with-you' && entry.path.includes('/') && <span className="cloud-name__where">{entry.path.split('/').slice(0, -1).join('/')}</span>}</span>
                     {entry.favorite && <i className="bx bxs-star cloud-star" aria-label="Favorite" />}
                     <SharedMark entry={entry} />
                 </button>
@@ -276,29 +277,38 @@ function Tile({ entry, selected, onOpen, onSelect, menu }: { entry: Entry; selec
 
 function ItemMenu({ entry, view, onFavorite, onDialog, onDelete }: { entry: Entry; view: View; onFavorite: () => void; onDialog: (dialog: Dialog) => void; onDelete: () => void }) {
     const [open, setOpen] = useState(false);
-    const [place, setPlace] = useState<{ top: number | 'auto'; bottom: number | 'auto'; right: number }>({ top: 'auto', bottom: 'auto', right: 0 });
-    const ref = useOutside(open, () => setOpen(false));
+    const [place, setPlace] = useState<CSSProperties>({ top: 'auto', right: 'auto', bottom: 'auto', left: 8 });
+    const ref = useRef<HTMLDivElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
     const mine = view !== 'with-you';
     // The menu floats over everything, below the button or above it near the bottom of the screen.
     const toggle = (button: HTMLElement) => {
         const box = button.getBoundingClientRect();
-        const right = Math.max(8, window.innerWidth - box.right);
-        setPlace(box.bottom > window.innerHeight - 380 ? { top: 'auto', bottom: window.innerHeight - box.top + 4, right } : { top: box.bottom + 4, bottom: 'auto', right });
+        const width = Math.min(240, window.innerWidth - 16);
+        const left = Math.max(8, Math.min(box.right - width, window.innerWidth - width - 8));
+        setPlace(box.bottom > window.innerHeight - 380 ? { top: 'auto', right: 'auto', bottom: window.innerHeight - box.top + 4, left } : { top: box.bottom + 4, right: 'auto', bottom: 'auto', left });
         setOpen((value) => !value);
     };
     useEffect(() => {
         if (!open) return;
         const close = () => setOpen(false);
+        const outside = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (!ref.current?.contains(target) && !panelRef.current?.contains(target)) close();
+        };
+        const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') close(); };
+        document.addEventListener('mousedown', outside);
+        document.addEventListener('keydown', onKey);
         window.addEventListener('scroll', close, true);
         window.addEventListener('resize', close);
-        return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+        return () => { document.removeEventListener('mousedown', outside); document.removeEventListener('keydown', onKey); window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
     }, [open]);
     const act = (fn: () => void) => () => { setOpen(false); fn(); };
     const where = entry.path.split('/').slice(0, -1).join('/');
     return (
         <div className={`ps-dropdown cloud-menu${open ? ' is-open' : ''}`} ref={ref}>
             <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-btn--sm" aria-label={`Actions for ${entry.name}`} aria-expanded={open} onClick={(event) => { event.stopPropagation(); toggle(event.currentTarget); }}><i className="bx bx-dots-horizontal-rounded" /></button>
-            {open && <div className="ps-dropdown__menu cloud-menu__panel" style={place}>
+            {open && createPortal(<div ref={panelRef} className="ps-dropdown__menu cloud-menu__panel" style={place}>
                 {view !== 'folder' && <button type="button" className="ps-dropdown__item" onClick={act(() => navigate(fileRoute(where, entry.folder ? undefined : entry.name)))}><i className="bx bx-folder-open" />Show in its folder</button>}
                 {entry.folder
                     ? <a className="ps-dropdown__item" href={dav.zipUrl(entry.path)} onClick={() => setOpen(false)}><i className="bx bx-download" />Download as zip</a>
@@ -314,7 +324,7 @@ function ItemMenu({ entry, view, onFavorite, onDialog, onDelete }: { entry: Entr
                 {!entry.folder && <button type="button" className="ps-dropdown__item" onClick={act(() => onDialog({ kind: 'versions', entry }))}><i className="bx bx-history" />Versions</button>}
                 <button type="button" className="ps-dropdown__item" onClick={act(() => onDialog({ kind: 'tags', entry }))}><i className="bx bx-purchase-tag" />Tags</button>
                 {mine && <><div className="ps-dropdown__sep" /><button type="button" className="ps-dropdown__item cloud-danger" onClick={act(onDelete)}><i className="bx bx-trash" />Delete</button></>}
-            </div>}
+            </div>, document.body)}
         </div>
     );
 }

@@ -23,6 +23,16 @@ class Signing {
         return $this->appConfig->getValueString('plainshow', 'widget_secret', '', lazy: true);
     }
 
+    /** Signed query for Core's Cloud directory, tied to this Nextcloud account. */
+    public function directoryQuery(string $account, ?int $now = null): array {
+        $timestamp = $now ?? time();
+        return [
+            'account' => $account,
+            'ts' => $timestamp,
+            'sig' => hash_hmac('sha256', "cloud-directory|$account|$timestamp", $this->secret()),
+        ];
+    }
+
     /** Query string for a thumbnail of a file, valid for an hour, for one account. */
     public function thumbQuery(string $account, int $fileId, int $size, ?int $now = null): string {
         $expires = ($now ?? time()) + self::THUMB_LIFETIME;

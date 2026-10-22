@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { formatBytes } from './api/http';
-import { boot } from './boot';
+import { boot, can } from './boot';
 import { Link, usePath } from './router';
 import { Toasts } from './toast';
 import { Avatar, Meter } from './ui';
@@ -30,12 +30,13 @@ export function useOutside<T extends HTMLElement = HTMLDivElement>(open: boolean
 }
 
 const APPS = [
-    { href: 'https://plainshow.se', icon: 'bx-grid-alt', name: 'Dashboard' },
-    { href: 'https://blog.plainshow.se', icon: 'bx-news', name: 'Blog' },
-    { href: 'https://latex.plainshow.se', icon: 'bx-code-curly', name: 'LaTeX' },
-    { href: 'https://split.plainshow.se', icon: 'bx-wallet', name: 'Split' },
-    { href: boot.base + '/', icon: 'bx-cloud', name: 'Cloud', current: true },
-];
+    { id: 'core', href: 'https://plainshow.se', icon: 'bx-grid-alt', name: 'Dashboard' },
+    { id: 'blog', href: 'https://blog.plainshow.se', icon: 'bx-news', name: 'Blog' },
+    { id: 'split', href: 'https://split.plainshow.se', icon: 'bx-wallet', name: 'Split' },
+    { id: 'latex', href: 'https://latex.plainshow.se', icon: 'bx-code-curly', name: 'LaTeX' },
+    { id: 'web', href: 'https://web.plainshow.se', icon: 'bx-server', name: 'Web' },
+    { id: 'cloud', href: boot.base + '/', icon: 'bx-cloud', name: 'Cloud', current: true },
+].filter((app) => app.id === 'core' || boot.user.services?.includes(app.id));
 
 function initials(name: string): string {
     return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
@@ -63,7 +64,10 @@ export default function Shell({ children }: { children: ReactNode }) {
 
     useEffect(() => { setMenuOpen(false); }, [path]);
 
-    const files = !/^\/(photos|calendar|settings)/.test(path);
+    const hasFiles = can('cloud.files.view');
+    const hasPhotos = can('cloud.photos.view');
+    const hasCalendar = can('cloud.calendar.view');
+    const files = hasFiles && !/^\/(photos|calendar|settings)/.test(path);
     const is = (target: string) => (target === '/' ? path === '/' || path.startsWith('/files') : path === target || path.startsWith(target + '/'));
     const item = (to: string, icon: string, label: string, sub = false, active = is(to)) => (
         <Link to={to} className={`ps-nav__item${sub ? ' ps-nav__item--sub' : ''}${active ? ' is-active' : ''}`}><i className={`bx ${icon}`} aria-hidden="true" />{label}</Link>
@@ -80,7 +84,7 @@ export default function Shell({ children }: { children: ReactNode }) {
                     </a>
                 </div>
                 <nav className="ps-nav">
-                    {item('/', 'bx-folder', 'Files', false, files && is('/'))}
+                    {hasFiles && item('/', 'bx-folder', 'Files', false, files && is('/'))}
                     {files && <>
                         {item('/recent', 'bx-time-five', 'Recent', true)}
                         {item('/favorites', 'bx-star', 'Favorites', true)}
@@ -88,23 +92,23 @@ export default function Shell({ children }: { children: ReactNode }) {
                         {item('/shared/by-you', 'bx-link', 'Shared by you', true)}
                         {item('/trash', 'bx-trash', 'Trash', true)}
                     </>}
-                    {item('/photos', 'bx-images', 'Photos', false, path === '/photos' || (path.startsWith('/photos') && !path.startsWith('/photos/albums')) || path.startsWith('/photos/albums'))}
-                    {path.startsWith('/photos') && <>
+                    {hasPhotos && item('/photos', 'bx-images', 'Photos', false, path === '/photos' || (path.startsWith('/photos') && !path.startsWith('/photos/albums')) || path.startsWith('/photos/albums'))}
+                    {hasPhotos && path.startsWith('/photos') && <>
                         {item('/photos', 'bx-grid', 'Timeline', true, path === '/photos')}
                         {item('/photos/albums', 'bx-photo-album', 'Albums', true)}
                     </>}
-                    {item('/calendar', 'bx-calendar', 'Calendar', false, path.startsWith('/calendar'))}
-                    {path.startsWith('/calendar') && extra}
+                    {hasCalendar && item('/calendar', 'bx-calendar', 'Calendar', false, path.startsWith('/calendar'))}
+                    {hasCalendar && path.startsWith('/calendar') && extra}
                     {item('/settings', 'bx-cog', 'Settings')}
                 </nav>
                 <div className="ps-sidebar__foot">
-                    {boot.quota.total !== null && (
+                    {hasFiles && boot.quota.total !== null && (
                         <div className="cloud-quota">
                             <Meter value={used} label="Storage used" />
                             <span className="ps-small ps-muted">{formatBytes(boot.quota.used)} of {formatBytes(boot.quota.total)} used</span>
                         </div>
                     )}
-                    {boot.quota.total === null && <span className="cloud-quota ps-small ps-muted">{formatBytes(boot.quota.used)} used</span>}
+                    {hasFiles && boot.quota.total === null && <span className="cloud-quota ps-small ps-muted">{formatBytes(boot.quota.used)} used</span>}
                     <div className={`ps-dropdown ps-me${accountOpen ? ' is-open' : ''}`} ref={accountRef}>
                         <button type="button" className="ps-me__button" aria-expanded={accountOpen} aria-label="Account menu" onClick={() => setAccountOpen((open) => !open)}>
                             <Avatar src={boot.user.avatar} initials={initials(boot.user.name)} size="sm" />
@@ -144,9 +148,9 @@ export default function Shell({ children }: { children: ReactNode }) {
             </div>
 
             <nav className="ps-tabbar" aria-label="Quick navigation">
-                <Link to="/" className={`ps-tabbar__item${files ? ' is-active' : ''}`}><i className="bx bx-folder" />Files</Link>
-                <Link to="/photos" className={`ps-tabbar__item${path.startsWith('/photos') ? ' is-active' : ''}`}><i className="bx bx-images" />Photos</Link>
-                <Link to="/calendar" className={`ps-tabbar__item${path.startsWith('/calendar') ? ' is-active' : ''}`}><i className="bx bx-calendar" />Calendar</Link>
+                {hasFiles && <Link to="/" className={`ps-tabbar__item${files ? ' is-active' : ''}`}><i className="bx bx-folder" />Files</Link>}
+                {hasPhotos && <Link to="/photos" className={`ps-tabbar__item${path.startsWith('/photos') ? ' is-active' : ''}`}><i className="bx bx-images" />Photos</Link>}
+                {hasCalendar && <Link to="/calendar" className={`ps-tabbar__item${path.startsWith('/calendar') ? ' is-active' : ''}`}><i className="bx bx-calendar" />Calendar</Link>}
                 <Link to="/settings" className={`ps-tabbar__item${path.startsWith('/settings') ? ' is-active' : ''}`}><i className="bx bx-cog" />Settings</Link>
             </nav>
             {menuOpen && <div className="cloud-scrim" onClick={() => setMenuOpen(false)} />}

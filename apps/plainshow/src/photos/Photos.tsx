@@ -3,7 +3,7 @@ import * as dav from '../api/dav';
 import { Entry, previewUrl } from '../api/dav';
 import * as photos from '../api/photos';
 import { Album, AlbumPhoto, Photo } from '../api/photos';
-import { findPeople, Sharee } from '../api/shares';
+import { PeoplePicker, plainShowSharee } from '../PeoplePicker';
 import { boot } from '../boot';
 import { NameDialog, ShareDialog } from '../files/dialogs';
 import Viewer from '../files/Viewer';
@@ -224,20 +224,12 @@ function AlbumPage({ id }: { id: number }) {
 }
 
 function AlbumPeople({ id, people, onClose, onChanged }: { id: number; people: { id: string; name: string }[]; onClose: () => void; onChanged: () => void }) {
-    const [search, setSearch] = useState('');
-    const [found, setFound] = useState<Sharee[]>([]);
-    useEffect(() => {
-        if (!search.trim()) { setFound([]); return; }
-        const timer = window.setTimeout(() => findPeople(search.trim(), 'file').then((list) => setFound(list.filter((s) => s.value.shareType === 0))).catch(() => setFound([])), 250);
-        return () => window.clearTimeout(timer);
-    }, [search]);
-    const set = async (person: string, on: boolean) => { try { await photos.shareAlbum(id, person, on); setSearch(''); onChanged(); } catch (error) { failed(error); } };
+    const set = async (person: string, on: boolean) => { try { await photos.shareAlbum(id, person, on); onChanged(); } catch (error) { failed(error); } };
     return (
         <Modal open title="Share the album" onClose={onClose}>
             <div className="ps-stack">
                 <p className="ps-small ps-muted">People you share it with see its photos and can add their own.</p>
-                <input className="ps-input" placeholder="Name of someone with Cloud" value={search} onChange={(event) => setSearch(event.target.value)} />
-                {found.length > 0 && <ul className="ps-chain">{found.map((sharee) => <li key={sharee.value.shareWith}><button type="button" className="ps-row cloud-picker__row" onClick={() => set(sharee.value.shareWith, true)}><span className="ps-row__icon"><i className="bx bx-user" /></span><span className="ps-row__body"><span className="ps-row__title">{sharee.label}</span></span><i className="bx bx-plus" /></button></li>)}</ul>}
+                <PeoplePicker itemType="file" filter={plainShowSharee} onPick={(sharee) => set(sharee.value.shareWith, true)} />
                 {people.length === 0 ? <p className="ps-muted ps-small">Only you see this album.</p> : <ul className="ps-chain">{people.map((person) => (
                     <li key={person.id} className="ps-row"><span className="ps-row__icon"><i className="bx bx-user" /></span><span className="ps-row__body"><span className="ps-row__title">{person.name}</span></span><span className="ps-row__action"><Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={`Stop sharing with ${person.name}`} onClick={() => set(person.id, false)} /></span></li>
                 ))}</ul>}

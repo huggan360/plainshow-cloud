@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\PlainShow\Controller;
 
 use OCA\PlainShow\Service\Page;
+use OCA\PlainShow\Service\PlatformDirectory;
 use OCA\PlainShow\Service\WebRoutes;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
@@ -41,6 +42,7 @@ class PageController extends Controller {
         private IRootFolder $root,
         private IURLGenerator $urls,
         private Page $page,
+        private PlatformDirectory $directory,
     ) {
         parent::__construct($appName, $request);
     }
@@ -64,6 +66,7 @@ class PageController extends Controller {
         $user = $this->session->getUser();
         $home = $this->root->getUserFolder($user->getUID());
         $quota = $user->getQuotaBytes();
+        $platform = $this->directory->forAccount($user->getUID());
         return $this->page->render([
             'user' => [
                 'id' => $user->getUID(),
@@ -71,6 +74,8 @@ class PageController extends Controller {
                 'email' => $user->getEMailAddress(),
                 'admin' => $this->groups->isAdmin($user->getUID()),
                 'avatar' => $this->urls->linkToRoute('core.avatar.getAvatar', ['userId' => $user->getUID(), 'size' => 64]),
+                'services' => $platform['viewer']['services'],
+                'capabilities' => $platform['viewer']['capabilities'],
             ],
             'quota' => ['used' => $home->getSize(), 'total' => $quota === FileInfo::SPACE_UNLIMITED ? null : $quota],
             'logout' => 'https://login.plainshow.se/logout?' . http_build_query(['return' => $this->urls->getAbsoluteURL('/')], '', '&', PHP_QUERY_RFC3986),

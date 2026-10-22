@@ -1,7 +1,8 @@
 import { CSSProperties, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as caldav from '../api/caldav';
 import { Calendar as Cal, CalendarShare, dayKey, Draft, Occurrence, Repeat, Task } from '../api/caldav';
-import { findPeople, Sharee } from '../api/shares';
+import { Sharee } from '../api/shares';
+import { PeoplePicker, plainShowSharee } from '../PeoplePicker';
 import { Link, navigate, usePath, useQuery } from '../router';
 import { PageHead, setSidebarExtra } from '../Shell';
 import { failed, toast } from '../toast';
@@ -361,8 +362,14 @@ const ALL_DAY_REMINDERS: [number | null, string][] = [[null, 'No reminder'], [-5
 function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editing & { calendars: Cal[]; onClose: () => void; onSaved: () => void }) {
     const writable = calendars.filter((c) => c.writable && c.events);
     const preferred = writable.find((c) => c.enabled && !c.owner) ?? writable[0];
+    const readOnly = occurrence ? occurrence.calendar.subscription || !occurrence.calendar.writable : false;
+    const [editing, setEditing] = useState(!occurrence);
     const [stored, setStored] = useState<{ ics: string; etag: string } | null>(null);
-    const [draft, setDraft] = useState<Draft | null>(occurrence ? null : {
+    const [draft, setDraft] = useState<Draft | null>(occurrence ? {
+        title: occurrence.title, location: occurrence.location, notes: occurrence.notes, allDay: occurrence.allDay,
+        start: occurrence.start, end: occurrence.allDay ? new Date(occurrence.end.getTime() - DAY) : occurrence.end,
+        repeat: occurrence.recurrenceId === null ? 'none' : 'custom', until: null, reminder: null,
+    } : {
         title: '', location: '', notes: '', allDay: false, repeat: 'none', until: null, reminder: 15,
         start: initial?.start ?? withTime(new Date(), '09:00'),
         end: initial?.end ?? new Date((initial?.start ?? withTime(new Date(), '09:00')).getTime() + 3600000),
@@ -371,12 +378,11 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
     const [calendarHref, setCalendarHref] = useState(occurrence?.calendar.href ?? preferred?.href ?? '');
     const [busy, setBusy] = useState(false);
     const [asking, setAsking] = useState(false);
-    const readOnly = occurrence ? !occurrence.calendar.writable : false;
 
     useEffect(() => {
-        if (!occurrence) return;
-        caldav.load(occurrence.href).then((loaded) => { setStored(loaded); setDraft(caldav.draftOf(loaded.ics)); }).catch((error) => { failed(error); onClose(); });
-    }, [occurrence?.href]);
+        if (!occurrence || readOnly) return;
+        caldav.load(occurrence.href).then((loaded) => { setStored(loaded); setDraft(caldav.draftOf(loaded.ics)); }).catch(failed);
+    }, [occurrence?.href, readOnly]);
 
     const change = (changes: Partial<Draft>) => setDraft((current) => (current ? { ...current, ...changes } : current));
     const setStart = (start: Date) => setDraft((current) => current && ({ ...current, start, end: new Date(start.getTime() + Math.max(0, current.end.getTime() - current.start.getTime())) }));
@@ -410,28 +416,47 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
     };
 
     const repeats = occurrence?.recurrenceId !== null && occurrence !== undefined;
-    const title = !occurrence ? 'New event' : readOnly ? 'Event' : 'Edit event';
+    const viewing = !!occurrence && !editing;
+    const title = !occurrence ? 'New event' : viewing ? 'Event' : 'Edit event';
     const reminders = draft?.allDay ? ALL_DAY_REMINDERS : REMINDERS;
-    const footer = draft && !readOnly && (
+    const cancelEdit = () => {
+        if (!occurrence) { onClose(); return; }
+        if (stored) setDraft(caldav.draftOf(stored.ics));
+        setCalendarHref(occurrence.calendar.href);
+        setAsking(false);
+        setEditing(false);
+    };
+    const deleteAction = occurrence && (asking
+        ? <span className="cloud-inline">{repeats && <Button variant="danger" size="sm" disabled={busy} onClick={() => remove(true)}>Only this one</Button>}<Button variant="danger" size="sm" disabled={busy} onClick={() => remove(false)}>{repeats ? 'All of them' : 'Yes, delete'}</Button><Button size="sm" variant="ghost" onClick={() => setAsking(false)}>Keep</Button></span>
+        : <Button variant="ghost" icon="bx-trash" className="cloud-danger" disabled={!stored || busy} onClick={() => setAsking(true)}>Delete event</Button>);
+    const footer = draft && !readOnly && (viewing ? (
         <div className="cloud-dialog-actions cloud-dialog-actions--split">
-            {occurrence && stored && (asking
-                ? <span className="cloud-inline">{repeats && <Button variant="danger" size="sm" disabled={busy} onClick={() => remove(true)}>Only this one</Button>}<Button variant="danger" size="sm" disabled={busy} onClick={() => remove(false)}>{repeats ? 'All of them' : 'Yes, delete'}</Button><Button size="sm" variant="ghost" onClick={() => setAsking(false)}>Keep</Button></span>
-                : <Button variant="ghost" icon="bx-trash" className="cloud-danger" onClick={() => setAsking(true)}>Delete</Button>)}
+            {deleteAction}
             <span className="cloud-toolbar__spacer" />
-            <Button onClick={onClose}>Cancel</Button>
+            <Button variant="primary" icon="bx-edit-alt" disabled={!stored || busy} onClick={() => setEditing(true)}>Edit event</Button>
+        </div>
+    ) : (
+        <div className="cloud-dialog-actions cloud-dialog-actions--split">
+            {deleteAction}
+            <span className="cloud-toolbar__spacer" />
+            <Button onClick={cancelEdit}>Cancel</Button>
             <Button variant="primary" loading={busy} onClick={save}>Save</Button>
         </div>
-    );
+    ));
 
     return (
         <Modal open title={title} onClose={onClose} footer={footer || undefined}>
-            {!draft ? <div className="cloud-loading"><span className="ps-loader" /></div> : readOnly ? (
-                <div className="ps-stack">
-                    <h3 className="ps-title">{draft.title || 'Busy'}</h3>
-                    <p className="ps-soft">{describe(draft)}</p>
-                    {draft.location && <p className="cloud-inline"><i className="bx bx-map" />{draft.location}</p>}
-                    {draft.notes && <p className="cloud-cal__notes">{draft.notes}</p>}
-                    <p className="ps-small ps-muted"><span className="cloud-dot" style={chipStyle(occurrence!.calendar.color)} />{occurrence!.calendar.name}{occurrence!.calendar.owner ? `, shared by ${occurrence!.calendar.owner}` : ''}. You can only look at this one.</p>
+            {!draft ? <div className="cloud-loading"><span className="ps-loader" /></div> : viewing ? (
+                <div className="ps-stack cloud-form cloud-event-readonly">
+                    <Field label="Title"><div className="cloud-read-value">{draft.title || 'Busy'}</div></Field>
+                    <div className="cloud-cal__when">
+                        <Field label="Starts"><div className="cloud-read-value">{formatMoment(draft.start, draft.allDay)}</div></Field>
+                        <Field label="Ends"><div className="cloud-read-value">{formatMoment(draft.end, draft.allDay)}</div></Field>
+                    </div>
+                    <Field label="Calendar"><div className="cloud-read-value"><span className="cloud-dot" style={chipStyle(occurrence!.calendar.color)} />{occurrence!.calendar.name}{occurrence!.calendar.owner ? ` (${occurrence!.calendar.owner})` : ''}</div></Field>
+                    {draft.location && <Field label="Place"><div className="cloud-read-value">{draft.location}</div></Field>}
+                    {draft.notes && <Field label="Notes"><div className="cloud-read-value cloud-cal__notes">{draft.notes}</div></Field>}
+                    {readOnly && <p className="ps-small ps-muted">This calendar is read-only.</p>}
                 </div>
             ) : (
                 <form className="ps-stack cloud-form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
@@ -485,10 +510,8 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
     );
 }
 
-function describe(draft: Draft): string {
-    const date = (d: Date) => d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    if (draft.allDay) return sameDay(draft.start, draft.end) ? `${date(draft.start)}, all day` : `${date(draft.start)} to ${date(draft.end)}`;
-    return sameDay(draft.start, draft.end) ? `${date(draft.start)}, ${clock(draft.start)} to ${clock(draft.end)}` : `${date(draft.start)} ${clock(draft.start)} to ${date(draft.end)} ${clock(draft.end)}`;
+function formatMoment(value: Date, allDay: boolean): string {
+    return value.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', ...(allDay ? {} : { hour: '2-digit', minute: '2-digit' }) });
 }
 
 /* ---------- The calendar list in the sidebar ---------- */
@@ -497,7 +520,7 @@ export const COLORS = ['#FC5000', '#E5534B', '#F5B301', '#2EA043', '#14B8A6', '#
 
 function CalendarList() {
     const calendars = useCalendars();
-    const [editing, setEditing] = useState<Cal | 'new' | null>(null);
+    const [editing, setEditing] = useState<Cal | 'new' | 'subscribe' | null>(null);
     const path = usePath();
     const events = (calendars ?? []).filter((c) => c.events || c.birthdays);
     return (
@@ -513,8 +536,10 @@ function CalendarList() {
                 </div>
             ))}
             <button type="button" className="cloud-cals__add" onClick={() => setEditing('new')}><i className="bx bx-plus" />New calendar</button>
+            <button type="button" className="cloud-cals__add" onClick={() => setEditing('subscribe')}><i className="bx bx-link" />Subscribe</button>
             <Link to="/calendar/tasks" className={`ps-nav__item ps-nav__item--sub${path === '/calendar/tasks' ? ' is-active' : ''}`}><i className="bx bx-task" aria-hidden="true" />Tasks</Link>
-            {editing && <CalendarDialog calendar={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
+            {editing === 'subscribe' && <SubscriptionDialog onClose={() => setEditing(null)} />}
+            {editing && editing !== 'subscribe' && <CalendarDialog calendar={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
         </div>
     );
 }
@@ -569,35 +594,51 @@ export function CalendarDialog({ calendar, kind = 'events', onClose }: { calenda
     );
 }
 
+function SubscriptionDialog({ onClose }: { onClose: () => void }) {
+    const [name, setName] = useState('');
+    const [url, setUrl] = useState('');
+    const [color, setColor] = useState(COLORS[Math.floor(Math.random() * COLORS.length)]);
+    const [busy, setBusy] = useState(false);
+    const save = async () => {
+        if (!name.trim() || !url.trim()) return;
+        setBusy(true);
+        try {
+            await caldav.subscribeCalendar(name.trim(), url.trim(), color);
+            await reloadCalendars();
+            toast('Calendar subscribed.');
+            onClose();
+        } catch (error) { failed(error); } finally { setBusy(false); }
+    };
+    return <Modal open title="Subscribe to calendar" onClose={onClose} footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" loading={busy} disabled={!name.trim() || !url.trim()} onClick={save}>Subscribe</Button></>}>
+        <div className="ps-stack">
+            <Field label="Name" htmlFor="subscription-name"><input id="subscription-name" className="ps-input" value={name} onChange={(event) => setName(event.target.value)} autoFocus /></Field>
+            <Field label="Subscription link" htmlFor="subscription-url" help="Paste an iCal, webcal, or .ics subscription link."><input id="subscription-url" className="ps-input" type="url" inputMode="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" /></Field>
+            <Field label="Colour" htmlFor="subscription-color"><input id="subscription-color" type="color" value={color} onChange={(event) => setColor(event.target.value)} /></Field>
+        </div>
+    </Modal>;
+}
+
 function CalendarPeople({ calendar }: { calendar: Cal }) {
     const [people, setPeople] = useState<CalendarShare[] | null>(null);
-    const [search, setSearch] = useState('');
-    const [found, setFound] = useState<Sharee[]>([]);
     const load = useCallback(() => caldav.calendarShares(calendar).then(setPeople).catch(() => setPeople([])), [calendar.href]);
     useEffect(() => { void load(); }, [load]);
-    useEffect(() => {
-        if (!search.trim()) { setFound([]); return; }
-        const timer = window.setTimeout(() => findPeople(search.trim(), 'file').then((list) => setFound(list.filter((s) => s.value.shareType === 0))).catch(() => setFound([])), 250);
-        return () => window.clearTimeout(timer);
-    }, [search]);
-    const set = async (person: string, access: 'read' | 'write' | null) => {
-        try { await caldav.shareCalendar(calendar, person, access); setSearch(''); await load(); } catch (error) { failed(error); }
+    const set = async (person: string, access: 'read' | 'write' | null, group = false) => {
+        try { await caldav.shareCalendar(calendar, person, access, group); await load(); } catch (error) { failed(error); }
     };
     return (
         <div className="ps-stack">
             <h3 className="cloud-subhead">Shared with</h3>
-            <input className="ps-input" placeholder="Name of someone with Cloud" value={search} onChange={(event) => setSearch(event.target.value)} />
-            {found.length > 0 && <ul className="ps-chain">{found.map((sharee) => <li key={sharee.value.shareWith}><button type="button" className="ps-row cloud-picker__row" onClick={() => set(sharee.value.shareWith, 'read')}><span className="ps-row__icon"><i className="bx bx-user" /></span><span className="ps-row__body"><span className="ps-row__title">{sharee.label}</span></span><i className="bx bx-plus" /></button></li>)}</ul>}
+            <PeoplePicker itemType="file" filter={plainShowSharee} onPick={(sharee: Sharee) => set(sharee.value.shareWith, 'read', sharee.value.shareType === 1)} />
             {people === null ? <span className="ps-loader" /> : people.length === 0 ? <p className="ps-small ps-muted">Only you see this.</p> : (
                 <ul className="ps-chain">{people.map((person) => (
                     <li key={person.id} className="ps-row">
-                        <span className="ps-row__icon"><i className="bx bx-user" /></span>
+                        <span className="ps-row__icon"><i className={`bx ${person.group ? 'bx-group' : 'bx-user'}`} /></span>
                         <span className="ps-row__body"><span className="ps-row__title">{person.name}</span></span>
                         <span className="ps-row__action cloud-row-actions">
-                            <select className="ps-select cloud-select--small" value={person.write ? 'write' : 'read'} aria-label={`What ${person.name} can do`} onChange={(event) => set(person.id, event.target.value as 'read' | 'write')}>
+                            <select className="ps-select cloud-select--small" value={person.write ? 'write' : 'read'} aria-label={`What ${person.name} can do`} onChange={(event) => set(person.id, event.target.value as 'read' | 'write', person.group)}>
                                 <option value="read">Can look</option><option value="write">Can change</option>
                             </select>
-                            <Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={`Stop sharing with ${person.name}`} onClick={() => set(person.id, null)} />
+                            <Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={`Stop sharing with ${person.name}`} onClick={() => set(person.id, null, person.group)} />
                         </span>
                     </li>
                 ))}</ul>

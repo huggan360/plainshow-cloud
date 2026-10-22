@@ -1,4 +1,4 @@
-import { ocs } from './http';
+import { api, ocs } from './http';
 
 const BASE = '/apps/files_sharing/api/v1';
 
@@ -55,10 +55,17 @@ export function unshare(id: string): Promise<void> {
     return ocs<void>(`${BASE}/shares/${id}`, { method: 'DELETE' });
 }
 
-export type Sharee = { label: string; value: { shareType: number; shareWith: string }; shareWithDisplayNameUnique?: string };
+export type Sharee = { label: string; icon?: string; value: { shareType: number; shareWith: string }; shareWithDisplayNameUnique?: string };
 
 /** People (and groups) to share with, by name. */
 export async function findPeople(search: string, itemType: 'file' | 'folder'): Promise<Sharee[]> {
-    const data = await ocs<{ exact: { users: Sharee[]; groups: Sharee[] }; users: Sharee[]; groups: Sharee[] }>(`${BASE}/sharees?search=${encodeURIComponent(search)}&itemType=${itemType}&perPage=20&shareType[]=0&shareType[]=1`);
-    return [...data.exact.users, ...data.exact.groups, ...data.users, ...data.groups];
+    const [data, directory] = await Promise.all([
+        ocs<{ exact: { users: Sharee[]; groups: Sharee[] }; users: Sharee[]; groups: Sharee[] }>(`${BASE}/sharees?search=${encodeURIComponent(search)}&itemType=${itemType}&perPage=20&shareType[]=0&shareType[]=1`),
+        api<{ people: Array<{ serviceId: string }>; groups: Array<{ id: number }> }>('/api/web/directory'),
+    ]);
+    const people = new Set(directory.people.map((person) => person.serviceId));
+    const groups = new Set(directory.groups.map((group) => `ps-${group.id}`));
+    return [...data.exact.users, ...data.exact.groups, ...data.users, ...data.groups].filter((sharee) =>
+        sharee.value.shareType === 0 ? people.has(sharee.value.shareWith) : sharee.value.shareType === 1 && groups.has(sharee.value.shareWith),
+    );
 }

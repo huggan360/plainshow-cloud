@@ -5,7 +5,8 @@
 .cloud-toast--ok { color: var(--ps-green); }
 .cloud-toast--error { color: var(--ps-red); }
 .cloud-danger, .cloud-danger .bx { color: var(--ps-red) !important; }
-.cloud-scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, .4); }
+.ps-shell.is-menu-open::after { content: none; }
+.cloud-scrim { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .55); }
 @media (min-width: 992px) { .cloud-scrim, .cloud-topbar-mark { display: none; } }
 .cloud-quota { display: grid; gap: 6px; padding: 4px 10px 10px; }
 .cloud-subhead { margin: 6px 0 0; color: var(--ps-text-muted); font: 600 var(--ps-text-xs) var(--ps-font-ui); letter-spacing: .06em; text-transform: uppercase; }
@@ -34,7 +35,7 @@
 .cloud-selection strong { margin-right: auto; font: 600 var(--ps-text-sm) var(--ps-font-ui); }
 
 /* The list */
-.cloud-table { width: 100%; }
+.cloud-table { width: 100%; table-layout: fixed; }
 .cloud-table td { vertical-align: middle; }
 .cloud-table tr.is-selected td { background: var(--ps-accent-bg); }
 .cloud-table tr.is-drop td { background: var(--ps-accent-bg); box-shadow: inset 0 0 0 1px var(--ps-accent); }
@@ -48,8 +49,9 @@
 .cloud-name { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; padding: 0; border: 0; background: none; color: var(--ps-text); font: 500 var(--ps-text-md) var(--ps-font-ui); text-align: left; cursor: pointer; }
 .cloud-name:hover .cloud-name__text { color: var(--ps-accent-text); }
 .cloud-name__icon { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 8px; overflow: hidden; font-size: 1.6rem; }
-.cloud-name__text { display: grid; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cloud-name__where { color: var(--ps-text-faint); font-size: var(--ps-text-xs); font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
+.cloud-name__text { display: block; flex: 1; min-width: 0; overflow: hidden; }
+.cloud-name__title, .cloud-name__where { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cloud-name__where { color: var(--ps-text-faint); font-size: var(--ps-text-xs); font-weight: 400; }
 .cloud-thumb { width: 100%; height: 100%; object-fit: cover; }
 .cloud-star { color: #f5b301; flex: none; }
 .cloud-shared-mark { color: var(--ps-text-muted); flex: none; }
@@ -75,7 +77,7 @@
 
 /* Menus */
 .cloud-menu { position: relative; display: inline-block; }
-.cloud-menu__panel { position: fixed; left: auto; min-width: 220px; max-height: calc(100vh - 16px); overflow-y: auto; z-index: 80; }
+.cloud-menu__panel { position: fixed; width: min(240px, calc(100vw - 16px)); min-width: 0; max-height: calc(100vh - 16px); overflow-y: auto; z-index: 1000; }
 
 /* Dropping and uploading */
 .cloud-files { position: relative; min-height: calc(100vh - 160px); }
@@ -95,8 +97,16 @@
 .cloud-picker { max-height: 46vh; overflow-y: auto; }
 .cloud-picker__row { width: 100%; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
 .cloud-picker__row:hover { background: var(--ps-hover); }
-.cloud-share-add { display: flex; gap: 12px; align-items: center; }
-.cloud-share-add .ps-input { flex: 1; }
+.cloud-share-add { display: grid; gap: 12px; }
+.cloud-share-access { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 12px; border: 1px solid var(--ps-shell-border); border-radius: 12px; background: var(--ps-raised); }
+.cloud-share-access > span { display: grid; gap: 2px; min-width: 0; }
+.cloud-share-access small { color: var(--ps-text-muted); font: var(--ps-text-xs) var(--ps-font-ui); }
+.cloud-people-picker { display: grid; gap: 8px; min-width: 0; }
+.cloud-people-picker .ps-input-wrap { width: 100%; }
+.cloud-people-picker__section { display: grid; gap: 4px; }
+.cloud-people-picker__heading { margin: 4px 4px 0; color: var(--ps-text-muted); font: 600 var(--ps-text-xs) var(--ps-font-ui); letter-spacing: .04em; text-transform: uppercase; }
+.cloud-people-picker .ps-row { gap: 10px; }
+.cloud-group-avatar { display: grid; flex: none; width: 32px; height: 32px; place-items: center; border: 2px solid var(--ps-accent); border-radius: 10px; background: var(--ps-accent-bg); color: var(--ps-accent-text); font-size: 1.1rem; }
 .cloud-link { border: 1px solid var(--ps-line); border-radius: 12px; overflow: hidden; }
 .cloud-link .ps-row__meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cloud-link__settings { display: grid; gap: 12px; padding: 12px; border-top: 1px solid var(--ps-line); background: var(--ps-bg); }
@@ -128,9 +138,13 @@
 /* Phones */
 @media (max-width: 700px) {
     .cloud-col-date, .cloud-col-meta, .cloud-col-size { display: none; }
+    .cloud-col-check { width: 34px; }
+    .cloud-col-actions { width: 44px; }
+    .cloud-name { gap: 8px; }
+    .cloud-name__icon { width: 32px; height: 32px; }
     .cloud-filter { width: 100%; order: 3; }
     .cloud-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 8px; }
-    .cloud-share-add { flex-direction: column; align-items: stretch; }
+    .cloud-share-access { align-items: flex-start; }
 }
 
 /* Photos */
@@ -185,6 +199,9 @@
 .cloud-cal__when { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .cloud-cal__when .ps-field { min-width: 0; }
 .cloud-cal__notes { white-space: pre-wrap; }
+.cloud-read-value { min-height: 42px; padding: 10px 12px; border-radius: 10px; background: var(--ps-raised); color: var(--ps-text); font: var(--ps-text-md) var(--ps-font-ui); overflow-wrap: anywhere; }
+.cloud-read-value .cloud-dot { margin-left: 0; }
+.cloud-event-readonly .ps-field { margin-bottom: 0; }
 .cloud-time { flex: 0 0 132px !important; }
 .cloud-form .ps-field { margin-bottom: 0; }
 .cloud-chip { display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; margin-top: 2px; padding: 2px 6px; border: 0; border-radius: 5px; background: color-mix(in srgb, var(--cal) 16%, transparent); color: var(--ps-text); font: 500 var(--ps-text-xs)/1.35 var(--ps-font-ui); text-align: left; text-decoration: none; cursor: pointer; }

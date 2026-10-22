@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { api, formatBytes } from '../api/http';
-import { boot } from '../boot';
+import { boot, can } from '../boot';
 import { Link } from '../router';
 import { PageHead } from '../Shell';
 import { failed, toast } from '../toast';
@@ -22,12 +22,13 @@ type Admin = { people: Person[]; rules: Rules; retention: Retention; jobs: { mod
 const ago = (ms: number) => (ms > 0 ? relativeTime(new Date(ms).toISOString()) : 'Never');
 
 export default function Settings({ path }: { path: string }) {
-    const tab = path === '/settings/devices' ? 'devices' : path === '/settings/admin' && boot.user.admin ? 'admin' : 'you';
+    const hasFiles = can('cloud.files.view');
+    const tab = path === '/settings/admin' && boot.user.admin ? 'admin' : path === '/settings/devices' || !hasFiles ? 'devices' : 'you';
     return (
         <div className="cloud-settings">
             <PageHead title="Settings" />
             <nav className="ps-tabs cloud-settings__tabs" aria-label="Settings">
-                <Link to="/settings" className={`ps-tab${tab === 'you' ? ' is-active' : ''}`}>Storage and sharing</Link>
+                {hasFiles && <Link to="/settings" className={`ps-tab${tab === 'you' ? ' is-active' : ''}`}>Storage and sharing</Link>}
                 <Link to="/settings/devices" className={`ps-tab${tab === 'devices' ? ' is-active' : ''}`}>Devices</Link>
                 {boot.user.admin && <Link to="/settings/admin" className={`ps-tab${tab === 'admin' ? ' is-active' : ''}`}>Admin</Link>}
             </nav>
@@ -161,6 +162,7 @@ function Devices() {
     const apps = (list ?? []).filter((d) => d.kind === 'app');
     const browsers = (list ?? []).filter((d) => d.kind === 'browser');
     const server = window.location.origin + boot.webroot;
+    const calendarOnly = can('cloud.calendar.view') && !can('cloud.files.view') && !can('cloud.photos.view');
 
     const row = (device: Device) => {
         const { title, icon } = describeDevice(device.name);
@@ -188,7 +190,7 @@ function Devices() {
                         <Button iconOnly icon="bx-copy" aria-label="Copy the address" onClick={() => navigator.clipboard.writeText(server).then(() => toast('Copied.'))} />
                     </div>
                 </Field>
-                <p className="ps-small ps-muted">Use this address in the Nextcloud phone or desktop app. Sign in with PlainShow.</p>
+                <p className="ps-small ps-muted">{calendarOnly ? 'Use this address in your phone or computer calendar settings. Sign in with PlainShow.' : 'Use this address in the Nextcloud phone or desktop app. Sign in with PlainShow.'}</p>
             </Frame>
             <Frame>
                 <FrameHead title="App passwords" text="For calendar and contacts apps." />

@@ -8,6 +8,7 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\IDBConnection;
+use OCP\IGroupManager;
 use OCP\IUserManager;
 use RuntimeException;
 
@@ -21,6 +22,7 @@ class Albums {
         private IDBConnection $db,
         private IRootFolder $root,
         private IUserManager $users,
+        private IGroupManager $groups,
     ) {
     }
 
@@ -31,6 +33,15 @@ class Albums {
             ->where($shared->expr()->eq('collaborator_id', $shared->createNamedParameter($account)))
             ->andWhere($shared->expr()->eq('collaborator_type', $shared->createNamedParameter(0, IQueryBuilder::PARAM_INT)));
         $sharedIds = array_map('intval', $shared->executeQuery()->fetchAll(\PDO::FETCH_COLUMN));
+        $user = $this->users->get($account);
+        $groupIds = $user === null ? [] : $this->groups->getUserGroupIds($user);
+        if ($groupIds !== []) {
+            $groupShares = $this->db->getQueryBuilder();
+            $groupShares->select('album_id')->from('plainshow_album_collabs')
+                ->where($groupShares->expr()->eq('collaborator_type', $groupShares->createNamedParameter(1, IQueryBuilder::PARAM_INT)))
+                ->andWhere($groupShares->expr()->in('collaborator_id', $groupShares->createNamedParameter($groupIds, IQueryBuilder::PARAM_STR_ARRAY)));
+            $sharedIds = array_values(array_unique(array_merge($sharedIds, array_map('intval', $groupShares->executeQuery()->fetchAll(\PDO::FETCH_COLUMN)))));
+        }
 
         $q = $this->db->getQueryBuilder();
         $mine = $q->expr()->eq('a.user', $q->createNamedParameter($account));
@@ -185,28 +196,35 @@ class Albums {
     public function people(string $account, int $id): array {
         $this->one($account, $id);
         $q = $this->db->getQueryBuilder();
-        $q->select('collaborator_id')->from('plainshow_album_collabs')
-            ->where($q->expr()->eq('album_id', $q->createNamedParameter($id, IQueryBuilder::PARAM_INT)))
-            ->andWhere($q->expr()->eq('collaborator_type', $q->createNamedParameter(0, IQueryBuilder::PARAM_INT)));
-        return array_map(fn ($uid) => ['id' => (string)$uid, 'name' => $this->users->getDisplayName((string)$uid) ?? (string)$uid], $q->executeQuery()->fetchAll(\PDO::FETCH_COLUMN));
+        $q->select('collaborator_id', 'collaborator_type')->from('plainshow_album_collabs')
+            ->where($q->expr()->eq('album_id', $q->createNamedParameter($id, IQueryBuilder::PARAM_INT)));
+        return array_map(fn ($row) => [
+            'id' => (string)$row['collaborator_id'],
+            'name' => (int)$row['collaborator_type'] === 1
+                ? ($this->groups->get((string)$row['collaborator_id'])?->getDisplayName() ?? (string)$row['collaborator_id'])
+                : ($this->users->getDisplayName((string)$row['collaborator_id']) ?? (string)$row['collaborator_id']),
+        ], $q->executeQuery()->fetchAll());
     }
 
     public function share(string $account, int $id, string $person, bool $on): void {
         $this->own($account, $id);
-        if ($person === $account || !$this->users->userExists($person)) {
+        $group = preg_match('/^ps-[1-9][0-9]*$/', $person) === 1;
+        if ($person === $account || ($group ? $this->groups->get($person) === null : !$this->users->userExists($person))) {
             throw new RuntimeException('No such person.');
         }
+        $type = $group ? 1 : 0;
         $q = $this->db->getQueryBuilder();
         $q->delete('plainshow_album_collabs')
             ->where($q->expr()->eq('album_id', $q->createNamedParameter($id, IQueryBuilder::PARAM_INT)))
             ->andWhere($q->expr()->eq('collaborator_id', $q->createNamedParameter($person)))
+            ->andWhere($q->expr()->eq('collaborator_type', $q->createNamedParameter($type, IQueryBuilder::PARAM_INT)))
             ->executeStatement();
         if ($on) {
             $i = $this->db->getQueryBuilder();
             $i->insert('plainshow_album_collabs')->values([
                 'album_id' => $i->createNamedParameter($id, IQueryBuilder::PARAM_INT),
                 'collaborator_id' => $i->createNamedParameter($person),
-                'collaborator_type' => $i->createNamedParameter(0, IQueryBuilder::PARAM_INT),
+                'collaborator_type' => $i->createNamedParameter($type, IQueryBuilder::PARAM_INT),
             ])->executeStatement();
         }
     }

@@ -40,8 +40,8 @@ class ApiController extends Controller {
         ['method' => 'GET', 'path' => '/files', 'capability' => 'cloud.files.view'],
         ['method' => 'GET', 'path' => '/files/recent', 'capability' => 'cloud.files.view'],
         ['method' => 'GET', 'path' => '/files/download', 'capability' => 'cloud.files.view'],
-        ['method' => 'GET', 'path' => '/photos', 'capability' => 'cloud.files.view'],
-        ['method' => 'GET', 'path' => '/events', 'capability' => 'cloud.files.view'],
+        ['method' => 'GET', 'path' => '/photos', 'capability' => 'cloud.photos.view'],
+        ['method' => 'GET', 'path' => '/events', 'capability' => 'cloud.calendar.view'],
     ];
 
     public function __construct(
@@ -86,7 +86,7 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     #[FrontpageRoute(verb: 'GET', url: '/api/v1/me')]
     public function me(): JSONResponse {
-        [$account, $error] = $this->account();
+        [$account, $error] = $this->account(null);
         if ($error) {
             return $error;
         }
@@ -147,7 +147,7 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     #[FrontpageRoute(verb: 'GET', url: '/api/v1/photos')]
     public function photos(int $limit = 30): JSONResponse {
-        [$account, $error] = $this->account();
+        [$account, $error] = $this->account('cloud.photos.view');
         if ($error) {
             return $error;
         }
@@ -159,7 +159,7 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     #[FrontpageRoute(verb: 'GET', url: '/api/v1/events')]
     public function events(int $days = 14): JSONResponse {
-        [$account, $error] = $this->account();
+        [$account, $error] = $this->account('cloud.calendar.view');
         if ($error) {
             return $error;
         }
@@ -167,7 +167,7 @@ class ApiController extends Controller {
     }
 
     /** @return array{0: ?string, 1: ?JSONResponse} the account to act as, or the answer to give */
-    private function account(): array {
+    private function account(?string $capability = 'cloud.files.view'): array {
         if (!Signed::present($_SERVER)) {
             return [null, $this->send(['ok' => false, 'message' => 'Use https://plainshow.se/api/cloud/v1 with a PlainShow API token.'], Http::STATUS_UNAUTHORIZED)];
         }
@@ -177,7 +177,7 @@ class ApiController extends Controller {
             return [null, $this->send(['ok' => false, 'message' => $error->getMessage()], Http::STATUS_UNAUTHORIZED)];
         }
         $identity = Signed::identity($verified);
-        if (!$identity->hasService('cloud') || !$identity->can('cloud.files.view')) {
+        if (!$identity->hasService('cloud') || ($capability !== null && !$identity->can($capability))) {
             return [null, $this->send(['ok' => false, 'message' => 'You cannot use Cloud.'], Http::STATUS_FORBIDDEN)];
         }
         $account = (string)($verified['context']['ps_cloud_uid'] ?? '');
