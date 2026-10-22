@@ -23,7 +23,8 @@ class NotFoundResponse extends TemplateResponse {
 	 * @since 8.1.0
 	 */
 	public function __construct(int $status = Http::STATUS_NOT_FOUND, array $headers = []) {
-		parent::__construct('core', '404', [], 'guest', $status, $headers);
+		// PlainShow's error page (apps/plainshow/templates/error.php).
+		parent::__construct('plainshow', 'error', ['code' => 404], TemplateResponse::RENDER_AS_BLANK, $status, $headers);
 
 		$this->setContentSecurityPolicy(new ContentSecurityPolicy());
 	}

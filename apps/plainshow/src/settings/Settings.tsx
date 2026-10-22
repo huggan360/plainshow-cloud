@@ -190,7 +190,16 @@ function Devices() {
                         <Button iconOnly icon="bx-copy" aria-label="Copy the address" onClick={() => navigator.clipboard.writeText(server).then(() => toast('Copied.'))} />
                     </div>
                 </Field>
-                <p className="ps-small ps-muted">{calendarOnly ? 'Use this address in your phone or computer calendar settings. Sign in with PlainShow.' : 'Use this address in the Nextcloud phone or desktop app. Sign in with PlainShow.'}</p>
+                <p className="ps-small ps-muted">{calendarOnly ? 'Calendar and contacts apps sign in with this address, your username and an app password made below. Your PlainShow password does not work there.' : 'Use this address in the Nextcloud phone or desktop app. Sign in with PlainShow.'}</p>
+            </Frame>
+            <Frame>
+                <FrameHead title="iPhone, iPad or Mac" text="Adds your calendars, reminders and contacts in one step. Open this page in Safari on the device." />
+                <form method="post" action={`${boot.base}/api/web/settings/devices/apple`} className="cloud-inline" onSubmit={() => window.setTimeout(() => void load(), 3000)}>
+                    <input type="hidden" name="requesttoken" value={boot.requestToken} />
+                    <input className="ps-input" name="name" defaultValue="iPhone calendar and contacts" aria-label="Device name" maxLength={120} required />
+                    <Button type="submit" variant="primary" icon="bxl-apple">Add to device</Button>
+                </form>
+                <p className="ps-small ps-muted">Then open Settings on the device, tap <strong>Profile Downloaded</strong> and install it.</p>
             </Frame>
             <Frame>
                 <FrameHead title="App passwords" text="For calendar and contacts apps." />

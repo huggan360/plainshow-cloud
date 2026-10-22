@@ -11,7 +11,10 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\DataDisplayResponse;
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\Authentication\Exceptions\InvalidTokenException;
 use OCP\Authentication\Token\IToken;
 use OCP\Files\IRootFolder;
@@ -23,6 +26,7 @@ use OCP\IRequest;
 use OCP\ISession;
 use OCP\IUser;
 use OCP\IUserManager;
+use OCP\IURLGenerator;
 use OCP\IUserSession;
 use OCP\Security\ISecureRandom;
 use OCP\Share\IManager as ShareManager;
@@ -50,6 +54,7 @@ class SettingsController extends Controller {
         private IUserManager $users,
         private ShareManager $shares,
         private IDBConnection $db,
+        private IURLGenerator $urls,
     ) {
         parent::__construct($appName, $request);
     }
@@ -150,37 +155,89 @@ class SettingsController extends Controller {
     #[FrontpageRoute(verb: 'POST', url: '/api/web/settings/devices')]
     public function addDevice(string $name = ''): JSONResponse {
         return $this->answer(function () use ($name) {
-            $name = trim($name);
-            if ($name === '' || mb_strlen($name) > 120) {
-                throw new RuntimeException('Give the device a name, up to 120 characters.');
-            }
-            if ($this->session->exists('app_password') || !$this->config->getSystemValueBool('auth_can_create_app_token', true)) {
-                throw new RuntimeException('Make app passwords from a browser where you signed in to PlainShow.');
-            }
-            try {
-                $sessionId = $this->session->getId();
-                $sessionToken = $this->tokens->getToken($sessionId);
-                $loginName = $sessionToken->getLoginName();
-                try {
-                    $password = $this->tokens->getPassword($sessionToken, $sessionId);
-                } catch (PasswordlessTokenException) {
-                    $password = null;
-                }
-            } catch (InvalidTokenException) {
-                throw new RuntimeException('Your session could not be read. Sign in again and try once more.');
-            }
-            $groups = [];
-            for ($i = 0; $i < 5; $i++) {
-                $groups[] = $this->random->generate(5, ISecureRandom::CHAR_HUMAN_READABLE);
-            }
-            $secret = implode('-', $groups);
-            $token = $this->tokens->generateToken($secret, $this->me()->getUID(), $loginName, $password, $name, IToken::PERMANENT_TOKEN);
+            [$token, $loginName, $secret] = $this->makeAppPassword($name);
             return [
                 'loginName' => $loginName,
                 'password' => $secret,
                 'device' => ['id' => $token->getId(), 'name' => $token->getName(), 'lastActivity' => $token->getLastActivity() * 1000, 'kind' => 'app', 'current' => false],
             ];
         });
+    }
+
+    /**
+     * Calendar and contacts for an iPhone, iPad or Mac in one step: a new app
+     * password inside an Apple configuration profile. Opened from a form post,
+     * so Safari offers to install it.
+     */
+    #[NoAdminRequired]
+    #[FrontpageRoute(verb: 'POST', url: '/api/web/settings/devices/apple')]
+    public function appleProfile(string $name = ''): Response {
+        try {
+            [, $loginName, $secret] = $this->makeAppPassword($name !== '' ? $name : 'iPhone calendar and contacts');
+        } catch (RuntimeException $error) {
+            return new DataDisplayResponse($error->getMessage(), Http::STATUS_BAD_REQUEST, ['Content-Type' => 'text/plain; charset=utf-8']);
+        }
+        $uid = $this->me()->getUID();
+        $host = (string)parse_url($this->urls->getAbsoluteURL('/'), PHP_URL_HOST);
+        $principal = \OC::$WEBROOT . '/remote.php/dav/principals/users/' . rawurlencode($uid) . '/';
+        $uuid = fn () => strtoupper(vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex(random_bytes(16)), 4)));
+        $x = fn (string $value) => htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        $account = fn (string $kind, string $title) => '<dict>'
+            . "<key>{$kind}AccountDescription</key><string>{$x($title)}</string>"
+            . "<key>{$kind}HostName</key><string>{$x($host)}</string>"
+            . "<key>{$kind}Port</key><integer>443</integer>"
+            . "<key>{$kind}UseSSL</key><true/>"
+            . "<key>{$kind}PrincipalURL</key><string>{$x($principal)}</string>"
+            . "<key>{$kind}Username</key><string>{$x($loginName)}</string>"
+            . "<key>{$kind}Password</key><string>{$x($secret)}</string>"
+            . '<key>PayloadType</key><string>com.apple.' . strtolower($kind) . '.account</string>'
+            . '<key>PayloadIdentifier</key><string>se.plainshow.cloud.' . strtolower($kind) . '.' . $x($uid) . '</string>'
+            . "<key>PayloadUUID</key><string>{$uuid()}</string><key>PayloadVersion</key><integer>1</integer>"
+            . "<key>PayloadDisplayName</key><string>{$x($title)}</string>"
+            . '</dict>';
+        $profile = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+            . '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' . "\n"
+            . '<plist version="1.0"><dict>'
+            . '<key>PayloadContent</key><array>' . $account('CalDAV', 'PlainShow Calendar') . $account('CardDAV', 'PlainShow Contacts') . '</array>'
+            . '<key>PayloadDisplayName</key><string>PlainShow Cloud</string>'
+            . '<key>PayloadDescription</key><string>Your PlainShow calendars, reminders and contacts.</string>'
+            . '<key>PayloadOrganization</key><string>PlainShow</string>'
+            . '<key>PayloadIdentifier</key><string>se.plainshow.cloud.' . $x($uid) . '</string>'
+            . "<key>PayloadUUID</key><string>{$uuid()}</string>"
+            . '<key>PayloadType</key><string>Configuration</string><key>PayloadVersion</key><integer>1</integer>'
+            . '<key>PayloadRemovalDisallowed</key><false/>'
+            . '</dict></plist>';
+        return new DataDownloadResponse($profile, 'PlainShow Cloud.mobileconfig', 'application/x-apple-aspen-config');
+    }
+
+    /** @return array{0: IToken, 1: string, 2: string} the token, its login name and its password */
+    private function makeAppPassword(string $name): array {
+        $name = trim($name);
+        if ($name === '' || mb_strlen($name) > 120) {
+            throw new RuntimeException('Give the device a name, up to 120 characters.');
+        }
+        if ($this->session->exists('app_password') || !$this->config->getSystemValueBool('auth_can_create_app_token', true)) {
+            throw new RuntimeException('Make app passwords from a browser where you signed in to PlainShow.');
+        }
+        try {
+            $sessionId = $this->session->getId();
+            $sessionToken = $this->tokens->getToken($sessionId);
+            $loginName = $sessionToken->getLoginName();
+            try {
+                $password = $this->tokens->getPassword($sessionToken, $sessionId);
+            } catch (PasswordlessTokenException) {
+                $password = null;
+            }
+        } catch (InvalidTokenException) {
+            throw new RuntimeException('Your session could not be read. Sign in again and try once more.');
+        }
+        $groups = [];
+        for ($i = 0; $i < 5; $i++) {
+            $groups[] = $this->random->generate(5, ISecureRandom::CHAR_HUMAN_READABLE);
+        }
+        $secret = implode('-', $groups);
+        $token = $this->tokens->generateToken($secret, $this->me()->getUID(), $loginName, $password, $name, IToken::PERMANENT_TOKEN);
+        return [$token, $loginName, $secret];
     }
 
     #[NoAdminRequired]

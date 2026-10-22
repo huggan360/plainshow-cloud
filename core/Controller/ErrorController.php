@@ -23,12 +23,8 @@ class ErrorController extends Controller {
 	#[NoCSRFRequired]
 	#[FrontpageRoute(verb: 'GET', url: 'error/403')]
 	public function error403(): TemplateResponse {
-		$response = new TemplateResponse(
-			'core',
-			'403',
-			[],
-			'error'
-		);
+		// PlainShow's error page (apps/plainshow/templates/error.php).
+		$response = new TemplateResponse('plainshow', 'error', ['code' => 403], TemplateResponse::RENDER_AS_BLANK);
 		$response->setStatus(Http::STATUS_FORBIDDEN);
 		return $response;
 	}
@@ -37,12 +33,8 @@ class ErrorController extends Controller {
 	#[NoCSRFRequired]
 	#[FrontpageRoute(verb: 'GET', url: 'error/404')]
 	public function error404(): TemplateResponse {
-		$response = new TemplateResponse(
-			'core',
-			'404',
-			[],
-			'error'
-		);
+		// PlainShow's error page (apps/plainshow/templates/error.php).
+		$response = new TemplateResponse('plainshow', 'error', ['code' => 404], TemplateResponse::RENDER_AS_BLANK);
 		$response->setStatus(Http::STATUS_NOT_FOUND);
 		return $response;
 	}

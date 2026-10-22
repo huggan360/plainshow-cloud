@@ -1,3 +1,12 @@
+# Changelog
+
+## v1.2.0
+
+- iPhone, iPad and Mac: Settings, Devices, Add to device installs your calendars, reminders and contacts in one step (a configuration profile with its own app password).
+- Clearer device text: calendar apps use an app password, not the PlainShow password.
+- PlainShow's error pages for pages that do not exist.
+- Kit 1.6. AGENTS.md for developers.
+
 <!--
  - SPDX-FileCopyrightText: 2019 Nextcloud GmbH and Nextcloud contributors
  - SPDX-License-Identifier: AGPL-3.0-or-later
