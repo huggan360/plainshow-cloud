@@ -76,7 +76,7 @@ class WidgetsController extends Controller {
             'alt' => $file->getName(),
         ], $this->recent->photos($account, 12));
 
-        return ['type' => 'gallery', 'images' => $images, 'empty' => 'No photos yet.', 'more' => ['label' => 'Photos', 'url' => $this->urls->getAbsoluteURL('/')]];
+        return ['type' => 'gallery', 'images' => $images, 'empty' => \PlainShow\Kit\Lang::t('No photos yet.'), 'more' => ['label' => \PlainShow\Kit\Lang::t('Photos'), 'url' => $this->urls->getAbsoluteURL('/')]];
     }
 
     private function answer(array $data, int $status = Http::STATUS_OK): JSONResponse {

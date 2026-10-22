@@ -1,6 +1,7 @@
 /* PlainShow's UI pieces, the same as Core's (resources/js/Components/ui.tsx). */
 import { Link } from './router';
 import { ComponentProps, ReactNode, useEffect, useRef } from 'react';
+import { t, locale } from './i18n';
 
 type Glow = 'accent' | 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan';
 
@@ -123,7 +124,7 @@ export function Modal({ open, title, onClose, size, children, footer }: { open: 
                 <Frame>
                     <div className="ps-modal__head">
                         <h2 className="ps-modal__title">{title}</h2>
-                        <Button variant="ghost" iconOnly icon="bx-x" aria-label="Close" onClick={onClose} />
+                        <Button variant="ghost" iconOnly icon="bx-x" aria-label={t('Close')} onClick={onClose} />
                     </div>
                     <div className="ps-modal__body">{children}</div>
                     {footer && <div className="ps-modal__foot">{footer}</div>}
@@ -142,9 +143,9 @@ export function Meter({ value, label }: { value: number; label: string }) {
 }
 
 export function relativeTime(iso: string | null | undefined): string {
-    if (!iso) return 'Never';
+    if (!iso) return t('Never');
     const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-    const format = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+    const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
     const steps: [number, Intl.RelativeTimeFormatUnit][] = [[60, 'second'], [3600, 'minute'], [86400, 'hour'], [604800, 'day'], [2629800, 'week'], [31557600, 'month']];
     for (let i = 0; i < steps.length; i++) {
         const [limit, unit] = steps[i];

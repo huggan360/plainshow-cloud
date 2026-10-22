@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { findPeople, Sharee } from './api/shares';
 import { Avatar, Badge } from './ui';
+import { t } from './i18n';
 
 type Props = {
     itemType: 'file' | 'folder';
@@ -12,7 +13,7 @@ type Props = {
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || '?';
 export const plainShowSharee = (sharee: Sharee) => sharee.value.shareType === 0 || (sharee.value.shareType === 1 && /^ps-[1-9][0-9]*$/.test(sharee.value.shareWith));
 
-export function PeoplePicker({ itemType, onPick, filter, placeholder = 'Search people and groups' }: Props) {
+export function PeoplePicker({ itemType, onPick, filter, placeholder = t('Search people and groups') }: Props) {
     const [search, setSearch] = useState('');
     const [found, setFound] = useState<Sharee[]>([]);
     useEffect(() => {
@@ -37,7 +38,7 @@ export function PeoplePicker({ itemType, onPick, filter, placeholder = 'Search p
                     ? <span className="cloud-group-avatar"><i className="bx bx-group" /></span>
                     : <Avatar src={sharee.icon} initials={initials(sharee.label)} size="sm" />}
                 <span className="ps-row__body"><span className="ps-row__title">{sharee.label}</span>{sharee.shareWithDisplayNameUnique && <span className="ps-row__meta">{sharee.shareWithDisplayNameUnique}</span>}</span>
-                {sharee.value.shareType === 1 && <Badge tone="accent">Group</Badge>}<i className="bx bx-plus" />
+                {sharee.value.shareType === 1 && <Badge tone="accent">{t('Group')}</Badge>}<i className="bx bx-plus" />
             </button>
         </li>)}</ul>
     </div>;
@@ -45,6 +46,6 @@ export function PeoplePicker({ itemType, onPick, filter, placeholder = 'Search p
     return <div className="cloud-people-picker">
         <div className="ps-input-wrap"><i className="bx bx-search" aria-hidden="true" /><input className="ps-input" placeholder={placeholder} value={search} onChange={(event) => setSearch(event.target.value)} aria-label={placeholder} /></div>
         {section('Groups', groups)}
-        {section(search.trim() ? 'People' : 'Suggested people', people)}
+        {section(search.trim() ? t('People') : t('Suggested people'), people)}
     </div>;
 }

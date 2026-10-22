@@ -30,13 +30,13 @@ class CalendarController extends Controller {
     public function subscriptionObjects(string $uri): JSONResponse {
         $user = $this->session->getUser();
         if ($user === null) {
-            return new JSONResponse(['message' => 'Sign in to view this calendar.'], Http::STATUS_UNAUTHORIZED);
+            return new JSONResponse(['message' => \PlainShow\Kit\Lang::t('Sign in to view this calendar.')], Http::STATUS_UNAUTHORIZED);
         }
 
         $principal = 'principals/users/' . $user->getUID();
         $subscription = $this->calDav->getSubscriptionByUri($principal, $uri);
         if ($subscription === null) {
-            return new JSONResponse(['message' => 'Calendar subscription not found.'], Http::STATUS_NOT_FOUND);
+            return new JSONResponse(['message' => \PlainShow\Kit\Lang::t('Calendar subscription not found.')], Http::STATUS_NOT_FOUND);
         }
 
         $objects = [];

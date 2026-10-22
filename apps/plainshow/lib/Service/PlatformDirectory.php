@@ -25,7 +25,7 @@ class PlatformDirectory {
         curl_close($connection);
         $decoded = is_string($body) ? json_decode($body, true) : null;
         if ($status !== 200 || !is_array($decoded) || !is_array($decoded['viewer'] ?? null) || !is_array($decoded['viewer']['capabilities'] ?? null) || !is_array($decoded['people'] ?? null) || !is_array($decoded['groups'] ?? null)) {
-            throw new RuntimeException('PlainShow sharing directory is unavailable.');
+            throw new RuntimeException(\PlainShow\Kit\Lang::t('PlainShow sharing directory is unavailable.'));
         }
 
         return ['viewer' => $decoded['viewer'], 'people' => $decoded['people'], 'groups' => $decoded['groups']];

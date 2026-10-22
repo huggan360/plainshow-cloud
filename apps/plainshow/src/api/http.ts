@@ -1,10 +1,11 @@
 import { boot } from '../boot';
+import { t } from '../i18n';
 
 /** A request to this Cloud with the session and its request token (Nextcloud's CSRF check). */
 export async function request(url: string, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers);
     headers.set('requesttoken', boot.requestToken);
-    headers.set('X-Requested-With', 'XMLHttpRequest');
+    headers.set('X-Requested-With', t('XMLHttpRequest'));
     const response = await fetch(url.startsWith('http') ? url : boot.webroot + url, { credentials: 'same-origin', ...init, headers });
     if (response.status === 401 && !boot.public) {
         // The session ended: sign in again and come back here.

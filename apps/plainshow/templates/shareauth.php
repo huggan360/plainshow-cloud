@@ -12,13 +12,13 @@ $share = $_['share'];
 $owner = \OCP\Server::get(\OCP\IUserManager::class)->get($share->getShareOwner());
 $action = \OCP\Server::get(\OCP\IURLGenerator::class)->linkToRoute('files_sharing.Share.authenticate', ['token' => $share->getToken(), 'redirect' => 'preview']);
 ?><!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="<?php p(\PlainShow\Kit\Lang::current()); ?>" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="dark light">
     <meta name="robots" content="noindex">
-    <title>Password needed | PlainShow Cloud</title>
+    <title><?php p(\PlainShow\Kit\Lang::t('Password needed')); ?> | PlainShow Cloud</title>
     <link rel="icon" href="<?php p($base); ?>/ui/brand/favicon.ico?v=<?php p($v); ?>" sizes="any">
     <link rel="stylesheet" href="<?php p($base); ?>/ui/css/boxicons.css?v=<?php p($v); ?>">
     <link rel="stylesheet" href="<?php p($base); ?>/ui/css/plainshow.css?v=<?php p($v); ?>">
@@ -42,16 +42,16 @@ $action = \OCP\Server::get(\OCP\IURLGenerator::class)->linkToRoute('files_sharin
         <section class="ps-frame">
             <div class="ps-frame__panel">
                 <div class="shareauth__icon"><i class="bx bx-lock-alt" aria-hidden="true"></i></div>
-                <h1>This link has a password</h1>
-                <p><?php if ($owner): ?><?php p($owner->getDisplayName()); ?> shared something with you. <?php endif; ?>Enter the password you were given to open it.</p>
+                <h1><?php p(\PlainShow\Kit\Lang::t('This link has a password')); ?></h1>
+                <p><?php if ($owner): ?><?php p(\PlainShow\Kit\Lang::t('{name} shared something with you.', ['name' => $owner->getDisplayName()])); ?> <?php endif; ?><?php p(\PlainShow\Kit\Lang::t('Enter the password you were given to open it.')); ?></p>
                 <form method="post" action="<?php p($action); ?>">
                     <input type="hidden" name="requesttoken" value="<?php p(\OCP\Util::callRegister()); ?>">
                     <div class="ps-field">
-                        <label class="ps-label" for="password">Password</label>
+                        <label class="ps-label" for="password"><?php p(\PlainShow\Kit\Lang::t('Password')); ?></label>
                         <input class="ps-input" id="password" name="password" type="password" autocomplete="current-password" required autofocus<?php if (!empty($_['wrongpw'])): ?> aria-invalid="true" aria-describedby="wrong"<?php endif; ?>>
-                        <?php if (!empty($_['wrongpw'])): ?><p class="ps-error" id="wrong" role="alert">That password is not right. Try again.</p><?php endif; ?>
+                        <?php if (!empty($_['wrongpw'])): ?><p class="ps-error" id="wrong" role="alert"><?php p(\PlainShow\Kit\Lang::t('That password is not right. Try again.')); ?></p><?php endif; ?>
                     </div>
-                    <button type="submit" class="ps-btn ps-btn--primary ps-btn--block"><i class="bx bx-lock-open-alt" aria-hidden="true"></i><span>Open</span></button>
+                    <button type="submit" class="ps-btn ps-btn--primary ps-btn--block"><i class="bx bx-lock-open-alt" aria-hidden="true"></i><span><?php p(\PlainShow\Kit\Lang::t('Open')); ?></span></button>
                 </form>
             </div>
         </section>

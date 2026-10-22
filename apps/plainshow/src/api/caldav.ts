@@ -1,6 +1,7 @@
 import ICAL from 'ical.js';
 import { boot } from '../boot';
 import { api, CloudError, request } from './http';
+import { t } from '../i18n';
 
 /** One calendar or task list, as CalDAV describes it. */
 export type Calendar = {
@@ -46,7 +47,7 @@ async function dav(url: string, method: string, body?: string, headers: Record<s
     const response = await request(url, { method, body, headers: { 'Content-Type': 'application/xml; charset=utf-8', ...headers } });
     if (!response.ok && response.status !== 207) {
         const xml = await response.text();
-        throw new CloudError(xml.match(/<s:message>([^<]*)<\/s:message>/)?.[1] || (response.status === 412 ? 'Someone changed this meanwhile. Reload and try again.' : `Calendar answered ${response.status}.`), response.status);
+        throw new CloudError(xml.match(/<s:message>([^<]*)<\/s:message>/)?.[1] || (response.status === 412 ? t('Someone changed this meanwhile. Reload and try again.') : `Calendar answered ${response.status}.`), response.status);
     }
     return response;
 }
@@ -139,7 +140,7 @@ export async function calendars(): Promise<Calendar[]> {
         const birthdays = href.endsWith('/contact_birthdays/');
         return [{
             href,
-            name: birthdays ? 'Birthdays' : text(node, NS.d, 'displayname') || decodeURIComponent(href.split('/').filter(Boolean).pop() || '') || 'Calendar',
+            name: birthdays ? t('Birthdays') : text(node, NS.d, 'displayname') || decodeURIComponent(href.split('/').filter(Boolean).pop() || '') || t('Calendar'),
             color: (text(node, NS.a, 'calendar-color') || '#FC5000').slice(0, 7),
             events: components.length === 0 || components.includes('VEVENT'),
             tasks: components.includes('VTODO'),
@@ -247,7 +248,7 @@ async function queryOccurrences(calendar: Calendar, from: Date, to: Date): Promi
                     key: `${href}#${recurrence ? fromIcal(recurrence).getTime() : ''}`,
                     href, etag: text(node, NS.d, 'getetag'), calendar, uid: event.uid,
                     recurrenceId: recurrence ? fromIcal(recurrence).getTime() : null,
-                    title: event.summary || 'Busy', location: event.location || '', notes: event.description || '',
+                    title: event.summary || t('Busy'), location: event.location || '', notes: event.description || '',
                     start, end, allDay: event.startDate.isDate,
                 });
             });
@@ -267,7 +268,7 @@ function occurrence(event: ICAL.Event, startTime: ICAL.Time, href: string, etag:
         key: `${href}#${recurrenceId ?? ''}`,
         href, etag, calendar, uid: event.uid,
         recurrenceId,
-        title: event.summary || 'Busy', location: event.location || '', notes: event.description || '',
+        title: event.summary || t('Busy'), location: event.location || '', notes: event.description || '',
         start, end, allDay: startTime.isDate,
     };
 }
@@ -349,7 +350,7 @@ function apply(vevent: ICAL.Component, draft: Draft, zone: ICAL.Timezone | null,
         const property = vevent.addPropertyWithValue(name, value);
         if (value instanceof ICAL.Time && !value.isDate && zone && !['UTC', 'floating'].includes(zone.tzid) && (name === 'dtstart' || name === 'dtend')) property.setParameter('tzid', zone.tzid);
     };
-    set('summary', draft.title.trim() || 'New event');
+    set('summary', draft.title.trim() || t('New event'));
     set('location', draft.location.trim());
     set('description', draft.notes.trim());
     set('dtstart', toIcal(draft.start, draft.allDay, zone));
@@ -373,7 +374,7 @@ function apply(vevent: ICAL.Component, draft: Draft, zone: ICAL.Timezone | null,
     if (reminderChanged && draft.reminder !== null) {
         const alarm = new ICAL.Component('valarm');
         alarm.addPropertyWithValue('action', 'DISPLAY');
-        alarm.addPropertyWithValue('description', draft.title.trim() || 'Reminder');
+        alarm.addPropertyWithValue('description', draft.title.trim() || t('Reminder'));
         const trigger = alarm.addPropertyWithValue('trigger', ICAL.Duration.fromSeconds(-draft.reminder * 60));
         trigger.setParameter('related', 'START');
         vevent.addSubcomponent(alarm);

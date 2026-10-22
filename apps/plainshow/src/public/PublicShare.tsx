@@ -7,6 +7,7 @@ import { ICONS, kindOf, viewable } from '../files/kinds';
 import Viewer, { PdfFrame } from '../files/Viewer';
 import { failed, toast, Toasts } from '../toast';
 import { Button, Empty, Frame } from '../ui';
+import { t, tn, locale } from '../i18n';
 
 const share = boot.public!;
 
@@ -39,31 +40,31 @@ function useDir(): [string, (dir: string) => void] {
 /** A share link's page: one file, a folder to look through, or a folder to drop files into. */
 export default function PublicShare() {
     const [theme, toggleTheme] = useTheme();
-    const expires = share.expires ? new Date(share.expires).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+    const expires = share.expires ? new Date(share.expires).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) : null;
     return (
         <div className="cloud-public">
             <header className="cloud-public__bar">
                 <a href="https://plainshow.se" className="ps-brand">
-                    <img className="ps-brand__logo" src={`${boot.assets}/ui/brand/plainshow-logo.webp?v=${boot.version}`} alt="PlainShow" width="92" height="30" />
-                    <span className="ps-brand__suffix">Cloud</span>
+                    <img className="ps-brand__logo" src={`${boot.assets}/ui/brand/plainshow-logo.webp?v=${boot.version}`} alt={t('PlainShow')} width="92" height="30" />
+                    <span className="ps-brand__suffix">{t('Cloud')}</span>
                 </a>
                 <span className="cloud-toolbar__spacer" />
-                <Button variant="ghost" iconOnly icon={theme === 'light' ? 'bx-moon' : 'bx-sun'} aria-label={theme === 'light' ? 'Dark theme' : 'Light theme'} onClick={toggleTheme} />
+                <Button variant="ghost" iconOnly icon={theme === 'light' ? 'bx-moon' : 'bx-sun'} aria-label={theme === 'light' ? t('Dark theme') : t('Light theme')} onClick={toggleTheme} />
             </header>
             <main className="cloud-public__main">
                 <div className="ps-page-head">
                     <div>
                         <h1 className="ps-page-head__title cloud-public__title">{share.name}</h1>
                         <p className="ps-page-head__text">
-                            {share.owner ? <>Shared with you by <strong>{share.owner}</strong></> : 'Shared with you'}
-                            {expires && <>. The link works until {expires}</>}
+                            {share.owner ? <>{t('Shared with you by')}{' '}<strong>{share.owner}</strong></> : t('Shared with you')}
+                            {expires && <>{t('. The link works until')}{' '}{expires}</>}
                         </p>
                     </div>
                 </div>
                 {share.note && <Frame compact className="cloud-public__note"><p><i className="bx bx-message-square-detail" /> {share.note}</p></Frame>}
                 {!share.folder ? <OneFile /> : share.canRead ? <Folder /> : <DropOnly />}
             </main>
-            <footer className="cloud-public__foot ps-small ps-muted">PlainShow Cloud, <a href="https://plainshow.se">plainshow.se</a></footer>
+            <footer className="cloud-public__foot ps-small ps-muted">{t('PlainShow Cloud,')}{' '}<a href="https://plainshow.se">plainshow.se</a></footer>
             <Toasts />
         </div>
     );
@@ -95,7 +96,7 @@ function OneFile() {
             <div className="cloud-public__filebar">
                 <span className="cloud-name__icon"><i className={`bx ${ICONS[kind]} cloud-icon--${kind}`} /></span>
                 <span className="cloud-public__fileinfo"><strong>{share.name}</strong><span className="ps-small ps-muted">{formatBytes(share.size)}</span></span>
-                {!share.hideDownload && <a className="ps-btn ps-btn--primary" href={src} download={share.name}><i className="bx bx-download" />Download</a>}
+                {!share.hideDownload && <a className="ps-btn ps-btn--primary" href={src} download={share.name}><i className="bx bx-download" />{t('Download')}</a>}
             </div>
         </Frame>
     );
@@ -137,7 +138,7 @@ function Folder() {
             setUploading((list) => list.filter((u) => u.name !== file.name));
         }
         sending.current = false;
-        if (uploaded) toast(`${uploaded} file${uploaded === 1 ? '' : 's'} uploaded.`);
+        if (uploaded) toast(tn(uploaded, 'One file uploaded.', '{n} files uploaded.'));
         load();
     };
     const onDrop = (event: DragEvent) => { event.preventDefault(); setDragging(false); void send(Array.from(event.dataTransfer.files)); };
@@ -153,45 +154,45 @@ function Folder() {
     return (
         <div onDragOver={(event) => { if (share.canUpload) { event.preventDefault(); setDragging(true); } }} onDragLeave={() => setDragging(false)} onDrop={onDrop}>
             <div className="cloud-toolbar">
-                <nav className="cloud-crumbs" aria-label="Folders">
+                <nav className="cloud-crumbs" aria-label={t('Folders')}>
                     <button type="button" onClick={() => go('')}><i className="bx bxs-folder cloud-icon--folder" />{share.name}</button>
                     {parts.map((part, index) => <span key={index} className="cloud-inline"><i className="bx bx-chevron-right" /><button type="button" onClick={() => go(parts.slice(0, index + 1).join('/'))}>{part}</button></span>)}
                 </nav>
-                <div className="cloud-segment" role="group" aria-label="View">
-                    <button type="button" className={!grid ? 'is-active' : ''} aria-label="List" onClick={() => setGrid(false)}><i className="bx bx-list-ul" /></button>
-                    <button type="button" className={grid ? 'is-active' : ''} aria-label="Grid" onClick={() => setGrid(true)}><i className="bx bx-grid-alt" /></button>
+                <div className="cloud-segment" role="group" aria-label={t('View')}>
+                    <button type="button" className={!grid ? 'is-active' : ''} aria-label={t('List')} onClick={() => setGrid(false)}><i className="bx bx-list-ul" /></button>
+                    <button type="button" className={grid ? 'is-active' : ''} aria-label={t('Grid')} onClick={() => setGrid(true)}><i className="bx bx-grid-alt" /></button>
                 </div>
-                {share.canUpload && <><Button icon="bx-upload" onClick={() => input.current?.click()}>Upload</Button><input ref={input} type="file" multiple hidden onChange={(event) => { void send(Array.from(event.target.files ?? [])); event.target.value = ''; }} /></>}
-                {!share.hideDownload && <a className="ps-btn ps-btn--primary" href={zipUrl(dir)} download><i className="bx bx-download" />{dir ? 'Download this folder' : 'Download all'}</a>}
+                {share.canUpload && <><Button icon="bx-upload" onClick={() => input.current?.click()}>{t('Upload')}</Button><input ref={input} type="file" multiple hidden onChange={(event) => { void send(Array.from(event.target.files ?? [])); event.target.value = ''; }} /></>}
+                {!share.hideDownload && <a className="ps-btn ps-btn--primary" href={zipUrl(dir)} download><i className="bx bx-download" />{dir ? t('Download this folder') : t('Download all')}</a>}
             </div>
             {uploading.length > 0 && <Frame compact className="cloud-public__uploads">{uploading.map((u) => <div key={u.name} className="cloud-public__upload"><span>{u.name}</span><span className="ps-small ps-muted">{Math.round(u.sent / Math.max(1, u.total) * 100)}%</span></div>)}</Frame>}
             <Frame flush className={dragging ? 'is-drop' : ''}>
-                {items === null ? <div className="cloud-loading"><span className="ps-loader" /></div> : items.length === 0 ? <Empty icon="bx-folder-open">{share.canUpload ? 'Nothing here yet. Drop files to add them.' : 'This folder is empty.'}</Empty> : grid ? (
+                {items === null ? <div className="cloud-loading"><span className="ps-loader" /></div> : items.length === 0 ? <Empty icon="bx-folder-open">{share.canUpload ? t('Nothing here yet. Drop files to add them.') : t('This folder is empty.')}</Empty> : grid ? (
                     <div className="cloud-grid">
                         {items.map((item) => (
                             <div key={item.path} className="cloud-tile">
                                 <button type="button" className="cloud-tile__open" onClick={() => open(item)}><span className="cloud-tile__thumb"><Thumb entry={item} size={256} /></span></button>
-                                <div className="cloud-tile__foot"><span className="cloud-tile__name" title={item.name}>{item.name}</span>{!item.folder && !share.hideDownload && <a className="ps-btn ps-btn--ghost ps-btn--icon ps-btn--sm" href={fileUrl(item.path)} download={item.name} aria-label={`Download ${item.name}`}><i className="bx bx-download" /></a>}</div>
+                                <div className="cloud-tile__foot"><span className="cloud-tile__name" title={item.name}>{item.name}</span>{!item.folder && !share.hideDownload && <a className="ps-btn ps-btn--ghost ps-btn--icon ps-btn--sm" href={fileUrl(item.path)} download={item.name} aria-label={t('Download {name}', { name: item.name })}><i className="bx bx-download" /></a>}</div>
                             </div>
                         ))}
                     </div>
                 ) : (
                     <div className="ps-table-wrap">
                         <table className="ps-table cloud-table">
-                            <thead><tr><th>Name</th><th className="cloud-col-size">Size</th><th className="cloud-col-date">Changed</th><th className="cloud-col-actions"><span className="ps-sr-only">Download</span></th></tr></thead>
+                            <thead><tr><th>{t('Name')}</th><th className="cloud-col-size">{t('Size')}</th><th className="cloud-col-date">{t('Changed')}</th><th className="cloud-col-actions"><span className="ps-sr-only">{t('Download')}</span></th></tr></thead>
                             <tbody>{items.map((item) => (
                                 <tr key={item.path}>
                                     <td><button type="button" className="cloud-name" onClick={() => open(item)}><span className="cloud-name__icon"><Thumb entry={item} size={64} /></span><span className="cloud-name__text">{item.name}</span></button></td>
                                     <td className="cloud-col-size ps-muted">{formatBytes(item.size)}</td>
-                                    <td className="cloud-col-date ps-muted">{item.modified ? new Date(item.modified).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</td>
-                                    <td className="cloud-col-actions">{!share.hideDownload && <a className="ps-btn ps-btn--ghost ps-btn--icon ps-btn--sm" href={item.folder ? zipUrl(item.path) : fileUrl(item.path)} download={item.folder ? `${item.name}.zip` : item.name} aria-label={`Download ${item.name}`}><i className="bx bx-download" /></a>}</td>
+                                    <td className="cloud-col-date ps-muted">{item.modified ? new Date(item.modified).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</td>
+                                    <td className="cloud-col-actions">{!share.hideDownload && <a className="ps-btn ps-btn--ghost ps-btn--icon ps-btn--sm" href={item.folder ? zipUrl(item.path) : fileUrl(item.path)} download={item.folder ? `${item.name}.zip` : item.name} aria-label={t('Download {name}', { name: item.name })}><i className="bx bx-download" /></a>}</td>
                                 </tr>
                             ))}</tbody>
                         </table>
                     </div>
                 )}
             </Frame>
-            {items && items.length > 0 && <p className="cloud-summary ps-small ps-muted">{items.filter((i) => i.folder).length} folders, {files.length} files, {formatBytes(items.reduce((sum, i) => sum + i.size, 0))}</p>}
+            {items && items.length > 0 && <p className="cloud-summary ps-small ps-muted">{items.filter((i) => i.folder).length} {' '}{t('folders,')}{' '}{files.length} {' '}{t('files,')}{' '}{formatBytes(items.reduce((sum, i) => sum + i.size, 0))}</p>}
             {viewing !== null && files[viewing] && <Viewer items={files} index={viewing} onIndex={setViewing} onClose={() => setViewing(null)} />}
         </div>
     );
@@ -229,13 +230,13 @@ function DropOnly() {
         <Frame>
             <div className={`cloud-public__drop${dragging ? ' is-drop' : ''}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); void send(Array.from(event.dataTransfer.files)); }}>
                 <i className="bx bx-cloud-upload" aria-hidden="true" />
-                <p><strong>Drop files here</strong>{share.owner ? ` for ${share.owner}` : ''}.</p>
-                <p className="ps-small ps-muted">Only {share.owner || 'the owner'} sees what is in this folder.</p>
-                <Button variant="primary" icon="bx-upload" loading={!!busy} onClick={() => input.current?.click()}>Choose files</Button>
+                <p><strong>{t('Drop files here')}</strong>{share.owner ? t(' for {owner}', { owner: share.owner }) : ''}.</p>
+                <p className="ps-small ps-muted">{t('Only')}{' '}{share.owner || t('the owner')} {' '}{t('sees what is in this folder.')}</p>
+                <Button variant="primary" icon="bx-upload" loading={!!busy} onClick={() => input.current?.click()}>{t('Choose files')}</Button>
                 <input ref={input} type="file" multiple hidden onChange={(event) => { void send(Array.from(event.target.files ?? [])); event.target.value = ''; }} />
                 {busy && <p className="ps-small">{busy.name}: {busy.percent}%</p>}
             </div>
-            {sent.length > 0 && <ul className="ps-chain">{sent.map((name, index) => <li key={index} className="ps-row"><span className="ps-row__icon"><i className="bx bx-check-circle cloud-ok" /></span><span className="ps-row__body"><span className="ps-row__title">{name}</span><span className="ps-row__meta">Sent</span></span></li>)}</ul>}
+            {sent.length > 0 && <ul className="ps-chain">{sent.map((name, index) => <li key={index} className="ps-row"><span className="ps-row__icon"><i className="bx bx-check-circle cloud-ok" /></span><span className="ps-row__body"><span className="ps-row__title">{name}</span><span className="ps-row__meta">{t('Sent')}</span></span></li>)}</ul>}
         </Frame>
     );
 }

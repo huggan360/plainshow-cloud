@@ -31,7 +31,7 @@ class DirectoryController extends Controller {
     public function index(): JSONResponse {
         $user = $this->session->getUser();
         if ($user === null) {
-            return new JSONResponse(['message' => 'Sign in again to continue.'], Http::STATUS_UNAUTHORIZED);
+            return new JSONResponse(['message' => \PlainShow\Kit\Lang::t('Sign in again to continue.')], Http::STATUS_UNAUTHORIZED);
         }
         try {
             return new JSONResponse($this->directory->forAccount($user->getUID()));

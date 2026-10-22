@@ -4,6 +4,7 @@ import Files, { Trash } from './files/Files';
 import { navigate, usePath } from './router';
 import Shell from './Shell';
 import { Empty } from './ui';
+import { t } from './i18n';
 
 const Photos = lazy(() => import('./photos/Photos'));
 const Calendar = lazy(() => import('./calendar/Calendar'));
@@ -21,7 +22,7 @@ function Page({ path }: { path: string }) {
     if (path.startsWith('/photos')) return <Photos path={path} />;
     if (path.startsWith('/calendar')) return <Calendar path={path} />;
     if (path.startsWith('/settings')) return <Settings path={path} />;
-    return <Empty icon="bx-map">Nothing lives at this address.</Empty>;
+    return <Empty icon="bx-map">{t('Nothing lives at this address.')}</Empty>;
 }
 
 function requiredCapability(path: string): string | null {

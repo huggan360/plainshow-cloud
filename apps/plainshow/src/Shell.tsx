@@ -4,6 +4,7 @@ import { boot, can } from './boot';
 import { Link, usePath } from './router';
 import { Toasts } from './toast';
 import { Avatar, Meter } from './ui';
+import { t, lang, LANGS, setLang } from './i18n';
 
 function useTheme(): [string, () => void] {
     const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') ?? 'dark');
@@ -30,7 +31,7 @@ export function useOutside<T extends HTMLElement = HTMLDivElement>(open: boolean
 }
 
 const APPS = [
-    { id: 'core', href: 'https://plainshow.se', icon: 'bx-grid-alt', name: 'Dashboard' },
+    { id: 'core', href: 'https://plainshow.se', icon: 'bx-grid-alt', name: t('Dashboard') },
     { id: 'blog', href: 'https://blog.plainshow.se', icon: 'bx-news', name: 'Blog' },
     { id: 'split', href: 'https://split.plainshow.se', icon: 'bx-wallet', name: 'Split' },
     { id: 'latex', href: 'https://latex.plainshow.se', icon: 'bx-code-curly', name: 'LaTeX' },
@@ -76,52 +77,53 @@ export default function Shell({ children }: { children: ReactNode }) {
 
     return (
         <div className={`ps-shell${menuOpen ? ' is-menu-open' : ''}`}>
-            <aside className="ps-sidebar" aria-label="Cloud">
+            <aside className="ps-sidebar" aria-label={t('Cloud')}>
                 <div className="ps-sidebar__brand">
                     <a href="https://plainshow.se" className="ps-brand">
-                        <img className="ps-brand__logo" src={`${boot.assets}/ui/brand/plainshow-logo.webp?v=${boot.version}`} alt="PlainShow" width="92" height="30" />
-                        <span className="ps-brand__suffix">Cloud</span>
+                        <img className="ps-brand__logo" src={`${boot.assets}/ui/brand/plainshow-logo.webp?v=${boot.version}`} alt={t('PlainShow')} width="92" height="30" />
+                        <span className="ps-brand__suffix">{t('Cloud')}</span>
                     </a>
                 </div>
                 <nav className="ps-nav">
-                    {hasFiles && item('/', 'bx-folder', 'Files', false, files && is('/'))}
+                    {hasFiles && item('/', 'bx-folder', t('Files'), false, files && is('/'))}
                     {files && <>
-                        {item('/recent', 'bx-time-five', 'Recent', true)}
-                        {item('/favorites', 'bx-star', 'Favorites', true)}
-                        {item('/shared/with-you', 'bx-share-alt', 'Shared with you', true)}
-                        {item('/shared/by-you', 'bx-link', 'Shared by you', true)}
-                        {item('/trash', 'bx-trash', 'Trash', true)}
+                        {item('/recent', 'bx-time-five', t('Recent'), true)}
+                        {item('/favorites', 'bx-star', t('Favorites'), true)}
+                        {item('/shared/with-you', 'bx-share-alt', t('Shared with you'), true)}
+                        {item('/shared/by-you', 'bx-link', t('Shared by you'), true)}
+                        {item('/trash', 'bx-trash', t('Trash'), true)}
                     </>}
-                    {hasPhotos && item('/photos', 'bx-images', 'Photos', false, path === '/photos' || (path.startsWith('/photos') && !path.startsWith('/photos/albums')) || path.startsWith('/photos/albums'))}
+                    {hasPhotos && item('/photos', 'bx-images', t('Photos'), false, path === '/photos' || (path.startsWith('/photos') && !path.startsWith('/photos/albums')) || path.startsWith('/photos/albums'))}
                     {hasPhotos && path.startsWith('/photos') && <>
-                        {item('/photos', 'bx-grid', 'Timeline', true, path === '/photos')}
-                        {item('/photos/albums', 'bx-photo-album', 'Albums', true)}
+                        {item('/photos', 'bx-grid', t('Timeline'), true, path === '/photos')}
+                        {item('/photos/albums', 'bx-photo-album', t('Albums'), true)}
                     </>}
-                    {hasCalendar && item('/calendar', 'bx-calendar', 'Calendar', false, path.startsWith('/calendar'))}
+                    {hasCalendar && item('/calendar', 'bx-calendar', t('Calendar'), false, path.startsWith('/calendar'))}
                     {hasCalendar && path.startsWith('/calendar') && extra}
-                    {item('/settings', 'bx-cog', 'Settings')}
+                    {item('/settings', 'bx-cog', t('Settings'))}
                 </nav>
                 <div className="ps-sidebar__foot">
                     {hasFiles && boot.quota.total !== null && (
                         <div className="cloud-quota">
-                            <Meter value={used} label="Storage used" />
+                            <Meter value={used} label={t('Storage used')} />
                             <span className="ps-small ps-muted">{formatBytes(boot.quota.used)} of {formatBytes(boot.quota.total)} used</span>
                         </div>
                     )}
                     {hasFiles && boot.quota.total === null && <span className="cloud-quota ps-small ps-muted">{formatBytes(boot.quota.used)} used</span>}
                     <div className={`ps-dropdown ps-me${accountOpen ? ' is-open' : ''}`} ref={accountRef}>
-                        <button type="button" className="ps-me__button" aria-expanded={accountOpen} aria-label="Account menu" onClick={() => setAccountOpen((open) => !open)}>
+                        <button type="button" className="ps-me__button" aria-expanded={accountOpen} aria-label={t('Account menu')} onClick={() => setAccountOpen((open) => !open)}>
                             <Avatar src={boot.user.avatar} initials={initials(boot.user.name)} size="sm" />
                             <span className="ps-me__text"><span className="ps-me__name">{boot.user.name}</span><span className="ps-me__meta">@{boot.user.id}</span></span>
                             <i className={`bx ${accountOpen ? 'bx-chevron-down' : 'bx-chevron-up'} ps-me__chevron`} aria-hidden="true" />
                         </button>
                         {accountOpen && (
                             <div className="ps-dropdown__menu ps-dropdown__menu--up">
-                                <a href="https://plainshow.se/account" className="ps-dropdown__item"><i className="bx bx-user" />Account</a>
-                                <Link to="/settings/devices" className="ps-dropdown__item"><i className="bx bx-mobile" />Devices</Link>
-                                <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? 'Dark theme' : 'Light theme'}</button>
+                                <a href="https://plainshow.se/account" className="ps-dropdown__item"><i className="bx bx-user" />{t('Account')}</a>
+                                <Link to="/settings/devices" className="ps-dropdown__item"><i className="bx bx-mobile" />{t('Devices')}</Link>
+                                <LanguageSwitch />
+                                <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? t('Dark theme') : t('Light theme')}</button>
                                 <div className="ps-dropdown__sep" />
-                                <a href={boot.logout} className="ps-dropdown__item"><i className="bx bx-log-out" />Sign out</a>
+                                <a href={boot.logout} className="ps-dropdown__item"><i className="bx bx-log-out" />{t('Sign out')}</a>
                             </div>
                         )}
                     </div>
@@ -130,11 +132,11 @@ export default function Shell({ children }: { children: ReactNode }) {
 
             <div className="ps-main">
                 <header className="ps-topbar">
-                    <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-menu-toggle" aria-label="Open menu" onClick={() => setMenuOpen(true)}><i className="bx bx-menu" /></button>
-                    <a href="https://plainshow.se" className="ps-brand cloud-topbar-mark" aria-label="PlainShow"><img className="ps-brand__mark" src={`${boot.assets}/ui/brand/plainshow-icon.webp?v=${boot.version}`} alt="" /></a>
+                    <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-menu-toggle" aria-label={t('Open menu')} onClick={() => setMenuOpen(true)}><i className="bx bx-menu" /></button>
+                    <a href="https://plainshow.se" className="ps-brand cloud-topbar-mark" aria-label={t('PlainShow')}><img className="ps-brand__mark" src={`${boot.assets}/ui/brand/plainshow-icon.webp?v=${boot.version}`} alt="" /></a>
                     <span className="ps-topbar__spacer" />
                     <div className="ps-switcher" ref={switcherRef}>
-                        <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-switcher__trigger" aria-label="Switch service" aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid" /></button>
+                        <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-switcher__trigger" aria-label={t('Switch service')} aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid" /></button>
                         {switcherOpen && (
                             <div className="ps-switcher__panel">
                                 <div className="ps-switcher__grid">
@@ -147,11 +149,11 @@ export default function Shell({ children }: { children: ReactNode }) {
                 <main className="ps-content ps-content--wide cloud-content">{children}</main>
             </div>
 
-            <nav className="ps-tabbar" aria-label="Quick navigation">
-                {hasFiles && <Link to="/" className={`ps-tabbar__item${files ? ' is-active' : ''}`}><i className="bx bx-folder" />Files</Link>}
-                {hasPhotos && <Link to="/photos" className={`ps-tabbar__item${path.startsWith('/photos') ? ' is-active' : ''}`}><i className="bx bx-images" />Photos</Link>}
-                {hasCalendar && <Link to="/calendar" className={`ps-tabbar__item${path.startsWith('/calendar') ? ' is-active' : ''}`}><i className="bx bx-calendar" />Calendar</Link>}
-                <Link to="/settings" className={`ps-tabbar__item${path.startsWith('/settings') ? ' is-active' : ''}`}><i className="bx bx-cog" />Settings</Link>
+            <nav className="ps-tabbar" aria-label={t('Quick navigation')}>
+                {hasFiles && <Link to="/" className={`ps-tabbar__item${files ? ' is-active' : ''}`}><i className="bx bx-folder" />{t('Files')}</Link>}
+                {hasPhotos && <Link to="/photos" className={`ps-tabbar__item${path.startsWith('/photos') ? ' is-active' : ''}`}><i className="bx bx-images" />{t('Photos')}</Link>}
+                {hasCalendar && <Link to="/calendar" className={`ps-tabbar__item${path.startsWith('/calendar') ? ' is-active' : ''}`}><i className="bx bx-calendar" />{t('Calendar')}</Link>}
+                <Link to="/settings" className={`ps-tabbar__item${path.startsWith('/settings') ? ' is-active' : ''}`}><i className="bx bx-cog" />{t('Settings')}</Link>
             </nav>
             {menuOpen && <div className="cloud-scrim" onClick={() => setMenuOpen(false)} />}
             <Toasts />
@@ -170,4 +172,14 @@ export function PageHead({ title, text, actions }: { title: ReactNode; text?: Re
             {actions && <div className="ps-page-head__actions">{actions}</div>}
         </div>
     );
+}
+
+/** English, Dutch or Swedish, for every PlainShow site (the same switch in every app's menu). */
+function LanguageSwitch() {
+    return <div className="ps-dropdown__lang" role="group" aria-label={t('Language')}>
+        <i className="bx bx-globe" aria-hidden="true" /><span>{t('Language')}</span>
+        <span className="ps-lang">{LANGS.map((item) => (
+            <button key={item.code} type="button" lang={item.code} title={item.name} aria-pressed={item.code === lang} className={item.code === lang ? 'is-active' : ''} onClick={() => setLang(item.code)}>{item.code.toUpperCase()}</button>
+        ))}</span>
+    </div>;
 }

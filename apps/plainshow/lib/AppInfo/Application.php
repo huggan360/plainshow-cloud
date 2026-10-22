@@ -25,6 +25,8 @@ class Application extends App implements IBootstrap {
         $autoload = __DIR__ . '/../../vendor/autoload.php';
         if (is_file($autoload)) {
             require_once $autoload;
+            // Texts in the visitor's language (kit Lang: ps_lang cookie, else the browser).
+            \PlainShow\Kit\Lang::load(__DIR__ . '/../../lang');
         }
         // When photos were taken, for the timeline.
         $context->registerEventListener(MetadataLiveEvent::class, TakenDate::class);

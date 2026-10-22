@@ -4,7 +4,7 @@ $base = \OC::$WEBROOT . '/apps/plainshow';
 $v = $_['version'];
 $nonce = \OC::$server->get(\OC\Security\CSP\ContentSecurityPolicyNonceManager::class)->getNonce();
 ?><!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="<?php p($_['lang'] ?? 'en'); ?>" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

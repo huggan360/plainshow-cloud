@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { t } from './i18n';
 
 type Toast = { id: number; kind: 'success' | 'error'; message: string };
 const listeners = new Set<(toasts: Toast[]) => void>();
@@ -15,7 +16,7 @@ export function toast(message: string, kind: 'success' | 'error' = 'success') {
 }
 
 export function failed(error: unknown) {
-    toast(error instanceof Error ? error.message : 'Something went wrong.', 'error');
+    toast(error instanceof Error ? error.message : t('Something went wrong.'), 'error');
 }
 
 export function Toasts() {

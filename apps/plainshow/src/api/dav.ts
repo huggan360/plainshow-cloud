@@ -1,5 +1,6 @@
 import { boot } from '../boot';
 import { CloudError, request } from './http';
+import { t } from '../i18n';
 
 /** One file or folder, as WebDAV describes it. */
 export type Entry = {
@@ -84,9 +85,9 @@ async function dav(url: string, init: RequestInit & { depth?: string } = {}): Pr
 }
 
 const messages: Record<number, string> = {
-    403: 'You may not do that here.', 404: 'It is not there any more.', 405: 'Something with that name is already there.',
-    409: 'The folder it should go in is gone.', 412: 'Something with that name is already there.', 423: 'Someone is using it right now. Try again in a moment.',
-    507: 'There is not enough space left.',
+    403: t('You may not do that here.'), 404: t('It is not there any more.'), 405: t('Something with that name is already there.'),
+    409: t('The folder it should go in is gone.'), 412: t('Something with that name is already there.'), 423: t('Someone is using it right now. Try again in a moment.'),
+    507: t('There is not enough space left.'),
 };
 
 /** A folder and what is in it. The folder itself comes first. */

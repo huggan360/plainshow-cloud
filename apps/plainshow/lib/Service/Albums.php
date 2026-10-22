@@ -72,7 +72,7 @@ class Albums {
                 return $album;
             }
         }
-        throw new RuntimeException('No such album.');
+        throw new RuntimeException(\PlainShow\Kit\Lang::t('No such album.'));
     }
 
     public function create(string $account, string $name, string $location = ''): array {
@@ -189,7 +189,7 @@ class Albums {
                 }
             }
         }
-        throw new RuntimeException('No such photo in this album.');
+        throw new RuntimeException(\PlainShow\Kit\Lang::t('No such photo in this album.'));
     }
 
     /** People an album is shared with. */
@@ -210,7 +210,7 @@ class Albums {
         $this->own($account, $id);
         $group = preg_match('/^ps-[1-9][0-9]*$/', $person) === 1;
         if ($person === $account || ($group ? $this->groups->get($person) === null : !$this->users->userExists($person))) {
-            throw new RuntimeException('No such person.');
+            throw new RuntimeException(\PlainShow\Kit\Lang::t('No such person.'));
         }
         $type = $group ? 1 : 0;
         $q = $this->db->getQueryBuilder();
@@ -231,14 +231,14 @@ class Albums {
 
     private function own(string $account, int $id): void {
         if (!$this->one($account, $id)['mine']) {
-            throw new RuntimeException('Only the album\'s owner can do that.');
+            throw new RuntimeException(\PlainShow\Kit\Lang::t('Only the album\'s owner can do that.'));
         }
     }
 
     private function cleanName(string $name): string {
         $name = trim($name);
         if ($name === '' || mb_strlen($name) > 120) {
-            throw new RuntimeException('An album needs a name, up to 120 characters.');
+            throw new RuntimeException(\PlainShow\Kit\Lang::t('An album needs a name, up to 120 characters.'));
         }
         return $name;
     }

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.0
+
+- English, Dutch and Swedish: the browser's language by default, or chosen in the account menu (the choice follows you to every PlainShow site).
+- The account menu is the same in every app: Account, the app's own items, Language, Theme, Sign out.
+- A new upload panel: larger, with speed and time left, every file's state, retry and cancel; make it smaller or hide it while uploads carry on.
+
 ## v1.2.0
 
 - iPhone, iPad and Mac: Settings, Devices, Add to device installs your calendars, reminders and contacts in one step (a configuration profile with its own app password).

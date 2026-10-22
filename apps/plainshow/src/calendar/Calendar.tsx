@@ -8,8 +8,10 @@ import { PageHead, setSidebarExtra } from '../Shell';
 import { failed, toast } from '../toast';
 import { Button, Empty, Field, Modal, Switch } from '../ui';
 import Tasks from './Tasks';
+import { t, locale } from '../i18n';
 
 type View = 'month' | 'week' | 'day' | 'agenda';
+const VIEW_NAMES: Record<View, string> = { month: t('Month'), week: t('Week'), day: t('Day'), agenda: t('Agenda') };
 
 /* ---------- The calendars, shared by every part of the page ---------- */
 
@@ -54,10 +56,11 @@ const parseDay = (value: string | null) => {
     const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : startOfDay(new Date());
 };
-const clock = (date: Date) => date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const clock = (date: Date) => date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 const timeInput = (date: Date) => `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 const withTime = (day: Date, time: string) => { const [h, m] = time.split(':').map(Number); return new Date(day.getFullYear(), day.getMonth(), day.getDate(), h || 0, m || 0); };
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+// Monday first, in the chosen language (5 January 2026 is a Monday).
+const WEEKDAYS = Array.from({ length: 7 }, (_, i) => new Date(2026, 0, 5 + i).toLocaleDateString(locale, { weekday: 'short' }));
 
 function rangeOf(view: View, date: Date): { from: Date; to: Date; days: Date[] } {
     if (view === 'month') {
@@ -75,12 +78,12 @@ function rangeOf(view: View, date: Date): { from: Date; to: Date; days: Date[] }
 }
 
 function titleOf(view: View, date: Date): string {
-    if (view === 'month') return date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    if (view === 'day') return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    if (view === 'month') return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    if (view === 'day') return date.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const { from, to } = rangeOf(view, date);
     const last = addDays(to, -1);
     const sameMonth = from.getMonth() === last.getMonth();
-    return `${from.toLocaleDateString('en-GB', sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'short' })} to ${last.toLocaleDateString('en-GB', { day: 'numeric', month: sameMonth ? 'long' : 'short', year: 'numeric' })}`;
+    return t('{from} to {to}', { from: from.toLocaleDateString(locale, sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'short' }), to: last.toLocaleDateString(locale, { day: 'numeric', month: sameMonth ? 'long' : 'short', year: 'numeric' }) });
 }
 
 /** Does an occurrence touch this day? */
@@ -151,18 +154,18 @@ function Planner({ view }: { view: View }) {
     const writable = (calendars ?? []).filter((c) => c.writable && c.events);
     return (
         <div className="cloud-cal">
-            <PageHead title="Calendar" actions={writable.length > 0 && <Button variant="primary" icon="bx-plus" onClick={() => create({ start: withTime(sameDay(date, new Date()) ? new Date() : date, sameDay(date, new Date()) ? timeInput(new Date(Math.ceil(Date.now() / 1800000) * 1800000)) : '09:00') })}>New event</Button>} />
+            <PageHead title={t('Calendar')} actions={writable.length > 0 && <Button variant="primary" icon="bx-plus" onClick={() => create({ start: withTime(sameDay(date, new Date()) ? new Date() : date, sameDay(date, new Date()) ? timeInput(new Date(Math.ceil(Date.now() / 1800000) * 1800000)) : '09:00') })}>{t('New event')}</Button>} />
             <div className="cloud-toolbar cloud-cal__toolbar">
-                <Button size="sm" onClick={() => go(view, new Date())}>Today</Button>
+                <Button size="sm" onClick={() => go(view, new Date())}>{t('Today')}</Button>
                 <div className="cloud-cal__steps">
-                    <Button size="sm" variant="ghost" iconOnly icon="bx-chevron-left" aria-label="Back" onClick={() => step(-1)} />
-                    <Button size="sm" variant="ghost" iconOnly icon="bx-chevron-right" aria-label="Forward" onClick={() => step(1)} />
+                    <Button size="sm" variant="ghost" iconOnly icon="bx-chevron-left" aria-label={t('Back')} onClick={() => step(-1)} />
+                    <Button size="sm" variant="ghost" iconOnly icon="bx-chevron-right" aria-label={t('Forward')} onClick={() => step(1)} />
                 </div>
                 <h2 className="cloud-cal__title">{titleOf(view, date)}</h2>
                 <span className="cloud-toolbar__spacer" />
-                <div className="cloud-segment cloud-segment--text" role="tablist" aria-label="View">
+                <div className="cloud-segment cloud-segment--text" role="tablist" aria-label={t('View')}>
                     {(['month', 'week', 'day', 'agenda'] as View[]).map((v) => (
-                        <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? 'is-active' : ''} onClick={() => go(v, date)}>{v[0].toUpperCase() + v.slice(1)}</button>
+                        <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? 'is-active' : ''} onClick={() => go(v, date)}>{VIEW_NAMES[v]}</button>
                     ))}
                 </div>
             </div>
@@ -171,7 +174,7 @@ function Planner({ view }: { view: View }) {
                     {view === 'month' && <Month date={date} days={range.days} items={items} due={due} onOpen={(occurrence) => setEditing({ occurrence })} onDay={(day) => go('day', day)} onCreate={create} />}
                     {(view === 'week' || view === 'day') && <TimeGrid days={range.days} items={items} due={due} onOpen={(occurrence) => setEditing({ occurrence })} onDay={(day) => go('day', day)} onCreate={create} />}
                     {view === 'agenda' && <Agenda days={range.days} items={items} due={due} onOpen={(occurrence) => setEditing({ occurrence })} onMore={() => step(1)} />}
-                    {calendars.length === 0 && <Empty icon="bx-calendar">You have no calendars yet. Make one in the list beside.</Empty>}
+                    {calendars.length === 0 && <Empty icon="bx-calendar">{t('You have no calendars yet. Make one in the list beside.')}</Empty>}
                 </>
             )}
             {editing && <EventEditor {...editing} calendars={calendars ?? []} onClose={() => setEditing(null)} onSaved={saved} />}
@@ -188,7 +191,7 @@ function Month({ date, days, items, due, onOpen, onDay, onCreate }: {
     const today = new Date();
     const weeks = Array.from({ length: 6 }, (_, w) => days.slice(w * 7, w * 7 + 7));
     return (
-        <div className="cloud-month" role="grid" aria-label="Month">
+        <div className="cloud-month" role="grid" aria-label={t('Month')}>
             <div className="cloud-month__head" role="row">{WEEKDAYS.map((d) => <span key={d} role="columnheader">{d}</span>)}</div>
             {weeks.map((week) => (
                 <div key={dayKey(week[0])} className="cloud-month__week" role="row">
@@ -200,7 +203,7 @@ function Month({ date, days, items, due, onOpen, onDay, onCreate }: {
                         return (
                             <div key={dayKey(day)} role="gridcell" className={`cloud-month__day${day.getMonth() !== date.getMonth() ? ' is-other' : ''}${sameDay(day, today) ? ' is-today' : ''}`}
                                 onClick={(event) => { if (event.target === event.currentTarget) onCreate({ start: withTime(day, '09:00'), end: withTime(day, '10:00') }); }}>
-                                <button type="button" className="cloud-month__num" onClick={() => onDay(day)} aria-label={day.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}>{day.getDate()}</button>
+                                <button type="button" className="cloud-month__num" onClick={() => onDay(day)} aria-label={day.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}>{day.getDate()}</button>
                                 {visible.map((item) => (
                                     <button key={item.key} type="button" className={`cloud-chip${item.allDay ? ' cloud-chip--allday' : ''}`} style={chipStyle(item.calendar.color)} onClick={() => onOpen(item)} title={item.title}>
                                         {!item.allDay && <span className="cloud-chip__time">{sameDay(item.start, day) ? clock(item.start) : ''}</span>}
@@ -220,7 +223,7 @@ function Month({ date, days, items, due, onOpen, onDay, onCreate }: {
 
 function TaskChip({ task }: { task: Task }) {
     return (
-        <Link to={`/calendar/tasks?list=${encodeURIComponent(task.calendar.href)}`} className="cloud-chip cloud-chip--task" style={chipStyle(task.calendar.color)} title={`Task: ${task.title}`}>
+        <Link to={`/calendar/tasks?list=${encodeURIComponent(task.calendar.href)}`} className="cloud-chip cloud-chip--task" style={chipStyle(task.calendar.color)} title={t('Task: {title}', { title: task.title })}>
             <i className="bx bx-checkbox" aria-hidden="true" /><span className="cloud-chip__title">{task.title}</span>
         </Link>
     );
@@ -274,13 +277,13 @@ function TimeGrid({ days, items, due, onOpen, onDay, onCreate }: {
                 <span className="cloud-week__gutter" />
                 {days.map((day) => (
                     <button key={dayKey(day)} type="button" className={`cloud-week__date${sameDay(day, now) ? ' is-today' : ''}`} onClick={() => onDay(day)}>
-                        <span>{day.toLocaleDateString('en-GB', { weekday: 'short' })}</span><strong>{day.getDate()}</strong>
+                        <span>{day.toLocaleDateString(locale, { weekday: 'short' })}</span><strong>{day.getDate()}</strong>
                     </button>
                 ))}
             </div>
             {hasAllDay && (
                 <div className="cloud-week__allday">
-                    <span className="cloud-week__gutter ps-small ps-muted">All day</span>
+                    <span className="cloud-week__gutter ps-small ps-muted">{t('All day')}</span>
                     {days.map((day) => (
                         <div key={dayKey(day)} className="cloud-week__allday-col">
                             {allDay(day).map((item) => <button key={item.key} type="button" className="cloud-chip cloud-chip--allday" style={chipStyle(item.calendar.color)} onClick={() => onOpen(item)} title={item.title}><span className="cloud-chip__title">{item.title}</span></button>)}
@@ -309,7 +312,7 @@ function TimeGrid({ days, items, due, onOpen, onDay, onCreate }: {
                                     return (
                                         <button key={item.key} type="button" className={`cloud-event${height < 40 ? ' is-short' : ''}`} style={{ ...chipStyle(item.calendar.color), top, height, left: `calc(${lane.lane / lane.of * 100}% + 2px)`, width: `calc(${100 / lane.of}% - 4px)` }} onClick={() => onOpen(item)}>
                                             <strong>{item.title}</strong>
-                                            <span>{clock(item.start)} to {clock(item.end)}{item.location ? `, ${item.location}` : ''}</span>
+                                            <span>{clock(item.start)} to {clock(item.end)}{item.location ? t(', {location}', { location: item.location }) : ''}</span>
                                         </button>
                                     );
                                 })}
@@ -329,18 +332,18 @@ function Agenda({ days, items, due, onOpen, onMore }: { days: Date[]; items: Occ
     const filled = days.map((day) => ({ day, list: items.filter((item) => touches(item, day)), tasks: due.filter((t) => t.due && sameDay(t.due, day)) })).filter((d) => d.list.length || d.tasks.length);
     return (
         <div className="cloud-agenda">
-            {filled.length === 0 && <Empty icon="bx-calendar-check">Nothing in the next 30 days.</Empty>}
+            {filled.length === 0 && <Empty icon="bx-calendar-check">{t('Nothing in the next 30 days.')}</Empty>}
             {filled.map(({ day, list, tasks }) => (
                 <section key={dayKey(day)} className="cloud-agenda__day">
-                    <h3 className={sameDay(day, new Date()) ? 'is-today' : ''}><strong>{day.getDate()}</strong><span>{day.toLocaleDateString('en-GB', { weekday: 'long', month: 'long' })}</span></h3>
+                    <h3 className={sameDay(day, new Date()) ? 'is-today' : ''}><strong>{day.getDate()}</strong><span>{day.toLocaleDateString(locale, { weekday: 'long', month: 'long' })}</span></h3>
                     <ul>
                         {list.map((item) => (
                             <li key={item.key}>
                                 <button type="button" className="cloud-agenda__item" style={chipStyle(item.calendar.color)} onClick={() => onOpen(item)}>
-                                    <span className="cloud-agenda__time">{item.allDay ? 'All day' : sameDay(item.start, day) ? `${clock(item.start)} to ${clock(item.end)}` : `Until ${clock(item.end)}`}</span>
+                                    <span className="cloud-agenda__time">{item.allDay ? t('All day') : sameDay(item.start, day) ? t('{start} to {end}', { start: clock(item.start), end: clock(item.end) }) : t('Until {end}', { end: clock(item.end) })}</span>
                                     <span className="cloud-agenda__dot" />
                                     <span className="cloud-agenda__text"><strong>{item.title}</strong>{item.location && <span className="ps-small ps-muted">{item.location}</span>}</span>
-                                    {item.recurrenceId !== null && <i className="bx bx-repeat ps-muted" aria-label="Repeats" />}
+                                    {item.recurrenceId !== null && <i className="bx bx-repeat ps-muted" aria-label={t('Repeats')} />}
                                 </button>
                             </li>
                         ))}
@@ -348,16 +351,16 @@ function Agenda({ days, items, due, onOpen, onMore }: { days: Date[]; items: Occ
                     </ul>
                 </section>
             ))}
-            <div className="cloud-empty-actions"><Button size="sm" onClick={onMore}>The 30 days after</Button></div>
+            <div className="cloud-empty-actions"><Button size="sm" onClick={onMore}>{t('The 30 days after')}</Button></div>
         </div>
     );
 }
 
 /* ---------- The event editor ---------- */
 
-const REPEATS: [Repeat, string][] = [['none', 'Does not repeat'], ['daily', 'Every day'], ['weekly', 'Every week'], ['monthly', 'Every month'], ['yearly', 'Every year']];
-const REMINDERS: [number | null, string][] = [[null, 'No reminder'], [0, 'At the start'], [5, '5 minutes before'], [15, '15 minutes before'], [30, '30 minutes before'], [60, '1 hour before'], [120, '2 hours before'], [1440, '1 day before'], [2880, '2 days before'], [10080, '1 week before']];
-const ALL_DAY_REMINDERS: [number | null, string][] = [[null, 'No reminder'], [-540, 'On the day at 9:00'], [900, 'The day before at 9:00'], [2340, '2 days before at 9:00'], [9540, '1 week before at 9:00']];
+const REPEATS: [Repeat, string][] = [['none', t('Does not repeat')], ['daily', t('Every day')], ['weekly', t('Every week')], ['monthly', t('Every month')], ['yearly', t('Every year')]];
+const REMINDERS: [number | null, string][] = [[null, t('No reminder')], [0, t('At the start')], [5, t('5 minutes before')], [15, t('15 minutes before')], [30, t('30 minutes before')], [60, t('1 hour before')], [120, t('2 hours before')], [1440, t('1 day before')], [2880, t('2 days before')], [10080, t('1 week before')]];
+const ALL_DAY_REMINDERS: [number | null, string][] = [[null, t('No reminder')], [-540, t('On the day at 9:00')], [900, t('The day before at 9:00')], [2340, t('2 days before at 9:00')], [9540, t('1 week before at 9:00')]];
 
 function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editing & { calendars: Cal[]; onClose: () => void; onSaved: () => void }) {
     const writable = calendars.filter((c) => c.writable && c.events);
@@ -389,9 +392,9 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
 
     const save = async () => {
         if (!draft) return;
-        if (!draft.allDay && draft.end < draft.start) { toast('The event ends before it starts.', 'error'); return; }
+        if (!draft.allDay && draft.end < draft.start) { toast(t('The event ends before it starts.'), 'error'); return; }
         const target = calendars.find((c) => c.href === calendarHref);
-        if (!target) { toast('Pick a calendar.', 'error'); return; }
+        if (!target) { toast(t('Pick a calendar.'), 'error'); return; }
         setBusy(true);
         try {
             if (occurrence && stored) {
@@ -400,7 +403,7 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
             } else {
                 await caldav.createEvent(target, draft);
             }
-            toast(occurrence ? 'Saved.' : 'Added to your calendar.');
+            toast(occurrence ? t('Saved.') : t('Added to your calendar.'));
             onSaved();
         } catch (error) { failed(error); } finally { setBusy(false); }
     };
@@ -410,14 +413,14 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
         try {
             if (only) await caldav.skipOccurrence(occurrence);
             else await caldav.remove(occurrence.href, stored.etag);
-            toast('Deleted.');
+            toast(t('Deleted.'));
             onSaved();
         } catch (error) { failed(error); } finally { setBusy(false); setAsking(false); }
     };
 
     const repeats = occurrence?.recurrenceId !== null && occurrence !== undefined;
     const viewing = !!occurrence && !editing;
-    const title = !occurrence ? 'New event' : viewing ? 'Event' : 'Edit event';
+    const title = !occurrence ? t('New event') : viewing ? t('Event') : t('Edit event');
     const reminders = draft?.allDay ? ALL_DAY_REMINDERS : REMINDERS;
     const cancelEdit = () => {
         if (!occurrence) { onClose(); return; }
@@ -427,20 +430,20 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
         setEditing(false);
     };
     const deleteAction = occurrence && (asking
-        ? <span className="cloud-inline">{repeats && <Button variant="danger" size="sm" disabled={busy} onClick={() => remove(true)}>Only this one</Button>}<Button variant="danger" size="sm" disabled={busy} onClick={() => remove(false)}>{repeats ? 'All of them' : 'Yes, delete'}</Button><Button size="sm" variant="ghost" onClick={() => setAsking(false)}>Keep</Button></span>
-        : <Button variant="ghost" icon="bx-trash" className="cloud-danger" disabled={!stored || busy} onClick={() => setAsking(true)}>Delete event</Button>);
+        ? <span className="cloud-inline">{repeats && <Button variant="danger" size="sm" disabled={busy} onClick={() => remove(true)}>{t('Only this one')}</Button>}<Button variant="danger" size="sm" disabled={busy} onClick={() => remove(false)}>{repeats ? t('All of them') : t('Yes, delete')}</Button><Button size="sm" variant="ghost" onClick={() => setAsking(false)}>{t('Keep')}</Button></span>
+        : <Button variant="ghost" icon="bx-trash" className="cloud-danger" disabled={!stored || busy} onClick={() => setAsking(true)}>{t('Delete event')}</Button>);
     const footer = draft && !readOnly && (viewing ? (
         <div className="cloud-dialog-actions cloud-dialog-actions--split">
             {deleteAction}
             <span className="cloud-toolbar__spacer" />
-            <Button variant="primary" icon="bx-edit-alt" disabled={!stored || busy} onClick={() => setEditing(true)}>Edit event</Button>
+            <Button variant="primary" icon="bx-edit-alt" disabled={!stored || busy} onClick={() => setEditing(true)}>{t('Edit event')}</Button>
         </div>
     ) : (
         <div className="cloud-dialog-actions cloud-dialog-actions--split">
             {deleteAction}
             <span className="cloud-toolbar__spacer" />
-            <Button onClick={cancelEdit}>Cancel</Button>
-            <Button variant="primary" loading={busy} onClick={save}>Save</Button>
+            <Button onClick={cancelEdit}>{t('Cancel')}</Button>
+            <Button variant="primary" loading={busy} onClick={save}>{t('Save')}</Button>
         </div>
     ));
 
@@ -448,61 +451,61 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
         <Modal open title={title} onClose={onClose} footer={footer || undefined}>
             {!draft ? <div className="cloud-loading"><span className="ps-loader" /></div> : viewing ? (
                 <div className="ps-stack cloud-form cloud-event-readonly">
-                    <Field label="Title"><div className="cloud-read-value">{draft.title || 'Busy'}</div></Field>
+                    <Field label={t('Title')}><div className="cloud-read-value">{draft.title || t('Busy')}</div></Field>
                     <div className="cloud-cal__when">
-                        <Field label="Starts"><div className="cloud-read-value">{formatMoment(draft.start, draft.allDay)}</div></Field>
-                        <Field label="Ends"><div className="cloud-read-value">{formatMoment(draft.end, draft.allDay)}</div></Field>
+                        <Field label={t('Starts')}><div className="cloud-read-value">{formatMoment(draft.start, draft.allDay)}</div></Field>
+                        <Field label={t('Ends')}><div className="cloud-read-value">{formatMoment(draft.end, draft.allDay)}</div></Field>
                     </div>
-                    <Field label="Calendar"><div className="cloud-read-value"><span className="cloud-dot" style={chipStyle(occurrence!.calendar.color)} />{occurrence!.calendar.name}{occurrence!.calendar.owner ? ` (${occurrence!.calendar.owner})` : ''}</div></Field>
-                    {draft.location && <Field label="Place"><div className="cloud-read-value">{draft.location}</div></Field>}
-                    {draft.notes && <Field label="Notes"><div className="cloud-read-value cloud-cal__notes">{draft.notes}</div></Field>}
-                    {readOnly && <p className="ps-small ps-muted">This calendar is read-only.</p>}
+                    <Field label={t('Calendar')}><div className="cloud-read-value"><span className="cloud-dot" style={chipStyle(occurrence!.calendar.color)} />{occurrence!.calendar.name}{occurrence!.calendar.owner ? t(' ({owner})', { owner: occurrence!.calendar.owner }) : ''}</div></Field>
+                    {draft.location && <Field label={t('Place')}><div className="cloud-read-value">{draft.location}</div></Field>}
+                    {draft.notes && <Field label={t('Notes')}><div className="cloud-read-value cloud-cal__notes">{draft.notes}</div></Field>}
+                    {readOnly && <p className="ps-small ps-muted">{t('This calendar is read-only.')}</p>}
                 </div>
             ) : (
                 <form className="ps-stack cloud-form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-                    <Field label="Title" htmlFor="ev-title"><input id="ev-title" className="ps-input" value={draft.title} placeholder="What is happening?" autoFocus onChange={(event) => change({ title: event.target.value })} /></Field>
-                    <label className="cloud-inline-switch"><Switch checked={draft.allDay} label="All day" onChange={(allDay) => change({ allDay, reminder: allDay ? (draft.reminder === null ? null : -540) : (draft.reminder === null ? null : 15) })} />All day</label>
+                    <Field label={t('Title')} htmlFor="ev-title"><input id="ev-title" className="ps-input" value={draft.title} placeholder={t('What is happening?')} autoFocus onChange={(event) => change({ title: event.target.value })} /></Field>
+                    <label className="cloud-inline-switch"><Switch checked={draft.allDay} label={t('All day')} onChange={(allDay) => change({ allDay, reminder: allDay ? (draft.reminder === null ? null : -540) : (draft.reminder === null ? null : 15) })} />{t('All day')}</label>
                     <div className="cloud-cal__when">
-                        <Field label="Starts" htmlFor="ev-start">
+                        <Field label={t('Starts')} htmlFor="ev-start">
                             <div className="cloud-inline">
                                 <input id="ev-start" type="date" className="ps-input" value={dayKey(draft.start)} onChange={(event) => event.target.value && setStart(withTime(new Date(event.target.value + 'T12:00'), timeInput(draft.start)))} />
-                                {!draft.allDay && <input type="time" className="ps-input cloud-time" aria-label="Start time" step={300} value={timeInput(draft.start)} onChange={(event) => event.target.value && setStart(withTime(draft.start, event.target.value))} />}
+                                {!draft.allDay && <input type="time" className="ps-input cloud-time" aria-label={t('Start time')} step={300} value={timeInput(draft.start)} onChange={(event) => event.target.value && setStart(withTime(draft.start, event.target.value))} />}
                             </div>
                         </Field>
-                        <Field label="Ends" htmlFor="ev-end">
+                        <Field label={t('Ends')} htmlFor="ev-end">
                             <div className="cloud-inline">
                                 <input id="ev-end" type="date" className="ps-input" value={dayKey(draft.end)} min={dayKey(draft.start)} onChange={(event) => event.target.value && change({ end: withTime(new Date(event.target.value + 'T12:00'), timeInput(draft.end)) })} />
-                                {!draft.allDay && <input type="time" className="ps-input cloud-time" aria-label="End time" step={300} value={timeInput(draft.end)} onChange={(event) => event.target.value && change({ end: withTime(draft.end, event.target.value) })} />}
+                                {!draft.allDay && <input type="time" className="ps-input cloud-time" aria-label={t('End time')} step={300} value={timeInput(draft.end)} onChange={(event) => event.target.value && change({ end: withTime(draft.end, event.target.value) })} />}
                             </div>
                         </Field>
                     </div>
                     <div className="cloud-cal__when">
-                        <Field label="Repeats" htmlFor="ev-repeat">
+                        <Field label={t('Repeats')} htmlFor="ev-repeat">
                             <select id="ev-repeat" className="ps-select" value={draft.repeat} onChange={(event) => change({ repeat: event.target.value as Repeat })}>
-                                {draft.repeat === 'custom' && <option value="custom">As set on another device</option>}
+                                {draft.repeat === 'custom' && <option value="custom">{t('As set on another device')}</option>}
                                 {REPEATS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                             </select>
                         </Field>
                         {draft.repeat !== 'none' && draft.repeat !== 'custom' && (
-                            <Field label="Until" htmlFor="ev-until" help="Leave empty to keep repeating.">
+                            <Field label={t('Until')} htmlFor="ev-until" help={t('Leave empty to keep repeating.')}>
                                 <input id="ev-until" type="date" className="ps-input" value={draft.until ? dayKey(draft.until) : ''} min={dayKey(draft.start)} onChange={(event) => change({ until: event.target.value ? new Date(event.target.value + 'T12:00') : null })} />
                             </Field>
                         )}
                     </div>
-                    {repeats && <p className="ps-small ps-muted"><i className="bx bx-repeat" /> This event repeats. Changes here apply to every repeat.</p>}
-                    <Field label="Reminder" htmlFor="ev-reminder">
+                    {repeats && <p className="ps-small ps-muted"><i className="bx bx-repeat" /> {' '}{t('This event repeats. Changes here apply to every repeat.')}</p>}
+                    <Field label={t('Reminder')} htmlFor="ev-reminder">
                         <select id="ev-reminder" className="ps-select" value={draft.reminder === null ? '' : String(draft.reminder)} onChange={(event) => change({ reminder: event.target.value === '' ? null : Number(event.target.value) })}>
-                            {!reminders.some(([value]) => value === draft.reminder) && <option value={String(draft.reminder)}>As set on another device</option>}
+                            {!reminders.some(([value]) => value === draft.reminder) && <option value={String(draft.reminder)}>{t('As set on another device')}</option>}
                             {reminders.map(([value, label]) => <option key={label} value={value === null ? '' : String(value)}>{label}</option>)}
                         </select>
                     </Field>
-                    <Field label="Calendar" htmlFor="ev-cal">
+                    <Field label={t('Calendar')} htmlFor="ev-cal">
                         <select id="ev-cal" className="ps-select" value={calendarHref} onChange={(event) => setCalendarHref(event.target.value)}>
-                            {writable.map((c) => <option key={c.href} value={c.href}>{c.name}{c.owner ? ` (${c.owner})` : ''}</option>)}
+                            {writable.map((c) => <option key={c.href} value={c.href}>{c.name}{c.owner ? t(' ({owner})', { owner: c.owner }) : ''}</option>)}
                         </select>
                     </Field>
-                    <Field label="Place" htmlFor="ev-place"><input id="ev-place" className="ps-input" value={draft.location} placeholder="Where" onChange={(event) => change({ location: event.target.value })} /></Field>
-                    <Field label="Notes" htmlFor="ev-notes"><textarea id="ev-notes" className="ps-textarea" rows={3} value={draft.notes} onChange={(event) => change({ notes: event.target.value })} /></Field>
+                    <Field label={t('Place')} htmlFor="ev-place"><input id="ev-place" className="ps-input" value={draft.location} placeholder={t('Where')} onChange={(event) => change({ location: event.target.value })} /></Field>
+                    <Field label={t('Notes')} htmlFor="ev-notes"><textarea id="ev-notes" className="ps-textarea" rows={3} value={draft.notes} onChange={(event) => change({ notes: event.target.value })} /></Field>
                     <button type="submit" hidden />
                 </form>
             )}
@@ -511,7 +514,7 @@ function EventEditor({ occurrence, initial, calendars, onClose, onSaved }: Editi
 }
 
 function formatMoment(value: Date, allDay: boolean): string {
-    return value.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', ...(allDay ? {} : { hour: '2-digit', minute: '2-digit' }) });
+    return value.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', ...(allDay ? {} : { hour: '2-digit', minute: '2-digit' }) });
 }
 
 /* ---------- The calendar list in the sidebar ---------- */
@@ -528,16 +531,16 @@ function CalendarList() {
             {calendars === null && <span className="ps-loader cloud-cals__loading" />}
             {events.map((calendar) => (
                 <div key={calendar.href} className="cloud-cals__row">
-                    <button type="button" className="cloud-cals__toggle" aria-pressed={calendar.enabled} onClick={() => changeCalendar(calendar, { enabled: !calendar.enabled })} title={calendar.enabled ? 'Hide' : 'Show'}>
+                    <button type="button" className="cloud-cals__toggle" aria-pressed={calendar.enabled} onClick={() => changeCalendar(calendar, { enabled: !calendar.enabled })} title={calendar.enabled ? t('Hide') : t('Show')}>
                         <span className={`cloud-cals__box${calendar.enabled ? ' is-on' : ''}`} style={chipStyle(calendar.color)}>{calendar.enabled && <i className="bx bx-check" />}</span>
                         <span className="cloud-cals__name">{calendar.name}{calendar.owner && <span className="cloud-cals__owner">{calendar.owner}</span>}</span>
                     </button>
-                    {!calendar.birthdays && <button type="button" className="cloud-cals__more" aria-label={`Settings for ${calendar.name}`} onClick={() => setEditing(calendar)}><i className="bx bx-dots-horizontal-rounded" /></button>}
+                    {!calendar.birthdays && <button type="button" className="cloud-cals__more" aria-label={t('Settings for {name}', { name: calendar.name })} onClick={() => setEditing(calendar)}><i className="bx bx-dots-horizontal-rounded" /></button>}
                 </div>
             ))}
-            <button type="button" className="cloud-cals__add" onClick={() => setEditing('new')}><i className="bx bx-plus" />New calendar</button>
-            <button type="button" className="cloud-cals__add" onClick={() => setEditing('subscribe')}><i className="bx bx-link" />Subscribe</button>
-            <Link to="/calendar/tasks" className={`ps-nav__item ps-nav__item--sub${path === '/calendar/tasks' ? ' is-active' : ''}`}><i className="bx bx-task" aria-hidden="true" />Tasks</Link>
+            <button type="button" className="cloud-cals__add" onClick={() => setEditing('new')}><i className="bx bx-plus" />{t('New calendar')}</button>
+            <button type="button" className="cloud-cals__add" onClick={() => setEditing('subscribe')}><i className="bx bx-link" />{t('Subscribe')}</button>
+            <Link to="/calendar/tasks" className={`ps-nav__item ps-nav__item--sub${path === '/calendar/tasks' ? ' is-active' : ''}`}><i className="bx bx-task" aria-hidden="true" />{t('Tasks')}</Link>
             {editing === 'subscribe' && <SubscriptionDialog onClose={() => setEditing(null)} />}
             {editing && editing !== 'subscribe' && <CalendarDialog calendar={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
         </div>
@@ -552,7 +555,7 @@ export function CalendarDialog({ calendar, kind = 'events', onClose }: { calenda
     const noun = kind === 'tasks' || (calendar && !calendar.events) ? 'list' : 'calendar';
 
     const save = async () => {
-        if (!name.trim()) { toast(`The ${noun} needs a name.`, 'error'); return; }
+        if (!name.trim()) { toast(noun === 'list' ? t('The list needs a name.') : t('The calendar needs a name.'), 'error'); return; }
         setBusy(true);
         try {
             if (calendar) await caldav.updateCalendar(calendar, { name: name.trim(), color });
@@ -564,30 +567,30 @@ export function CalendarDialog({ calendar, kind = 'events', onClose }: { calenda
     const remove = async () => {
         if (!calendar) return;
         setBusy(true);
-        try { await caldav.deleteCalendar(calendar); await reloadCalendars(); toast(calendar.owner ? 'Taken off your list.' : `Deleted. It stays in the trash for a while.`); onClose(); } catch (error) { failed(error); } finally { setBusy(false); }
+        try { await caldav.deleteCalendar(calendar); await reloadCalendars(); toast(calendar.owner ? t('Taken off your list.') : t('Deleted. It stays in the trash for a while.')); onClose(); } catch (error) { failed(error); } finally { setBusy(false); }
     };
 
     return (
-        <Modal open title={calendar ? `${noun === 'list' ? 'Task list' : 'Calendar'} settings` : noun === 'list' ? 'New task list' : 'New calendar'} onClose={onClose} footer={
+        <Modal open title={calendar ? (noun === 'list' ? t('Task list settings') : t('Calendar settings')) : noun === 'list' ? t('New task list') : t('New calendar')} onClose={onClose} footer={
             <div className="cloud-dialog-actions cloud-dialog-actions--split">
                 {calendar && (asking
-                    ? <span className="cloud-inline"><Button variant="danger" size="sm" disabled={busy} onClick={remove}>{calendar.owner ? 'Yes, take it off' : 'Yes, delete it'}</Button><Button size="sm" variant="ghost" onClick={() => setAsking(false)}>Keep</Button></span>
-                    : <Button variant="ghost" icon="bx-trash" className="cloud-danger" onClick={() => setAsking(true)}>{calendar.owner ? 'Take off my list' : 'Delete'}</Button>)}
+                    ? <span className="cloud-inline"><Button variant="danger" size="sm" disabled={busy} onClick={remove}>{calendar.owner ? t('Yes, take it off') : t('Yes, delete it')}</Button><Button size="sm" variant="ghost" onClick={() => setAsking(false)}>{t('Keep')}</Button></span>
+                    : <Button variant="ghost" icon="bx-trash" className="cloud-danger" onClick={() => setAsking(true)}>{calendar.owner ? t('Take off my list') : t('Delete')}</Button>)}
                 <span className="cloud-toolbar__spacer" />
-                <Button onClick={onClose}>Cancel</Button>
-                <Button variant="primary" loading={busy} onClick={save}>{calendar ? 'Save' : 'Make it'}</Button>
+                <Button onClick={onClose}>{t('Cancel')}</Button>
+                <Button variant="primary" loading={busy} onClick={save}>{calendar ? t('Save') : t('Make it')}</Button>
             </div>
         }>
             <form className="ps-stack cloud-form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-                <Field label="Name" htmlFor="cal-name"><input id="cal-name" className="ps-input" value={name} disabled={!!calendar?.owner} onChange={(event) => setName(event.target.value)} autoFocus /></Field>
-                <Field label="Colour">
+                <Field label={t('Name')} htmlFor="cal-name"><input id="cal-name" className="ps-input" value={name} disabled={!!calendar?.owner} onChange={(event) => setName(event.target.value)} autoFocus /></Field>
+                <Field label={t('Colour')}>
                     <div className="cloud-swatches">
                         {COLORS.map((c) => <button key={c} type="button" className={`cloud-swatch${c.toLowerCase() === color.toLowerCase() ? ' is-active' : ''}`} style={chipStyle(c)} aria-label={c} onClick={() => setColor(c)} />)}
-                        <input type="color" className="cloud-swatch cloud-swatch--pick" value={color} aria-label="Other colour" onChange={(event) => setColor(event.target.value)} />
+                        <input type="color" className="cloud-swatch cloud-swatch--pick" value={color} aria-label={t('Other colour')} onChange={(event) => setColor(event.target.value)} />
                     </div>
                 </Field>
                 {calendar && !calendar.owner && <CalendarPeople calendar={calendar} />}
-                {calendar?.owner && <p className="ps-small ps-muted">{calendar.owner} shares this with you{calendar.writable ? ' and you can change it' : ''}. The colour is only yours.</p>}
+                {calendar?.owner && <p className="ps-small ps-muted">{calendar.owner} {' '}{t('shares this with you')}{calendar.writable ? t(' and you can change it') : ''}{t('. The colour is only yours.')}</p>}
                 <button type="submit" hidden />
             </form>
         </Modal>
@@ -605,15 +608,15 @@ function SubscriptionDialog({ onClose }: { onClose: () => void }) {
         try {
             await caldav.subscribeCalendar(name.trim(), url.trim(), color);
             await reloadCalendars();
-            toast('Calendar subscribed.');
+            toast(t('Calendar subscribed.'));
             onClose();
         } catch (error) { failed(error); } finally { setBusy(false); }
     };
-    return <Modal open title="Subscribe to calendar" onClose={onClose} footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" loading={busy} disabled={!name.trim() || !url.trim()} onClick={save}>Subscribe</Button></>}>
+    return <Modal open title={t('Subscribe to calendar')} onClose={onClose} footer={<><Button variant="ghost" onClick={onClose}>{t('Cancel')}</Button><Button variant="primary" loading={busy} disabled={!name.trim() || !url.trim()} onClick={save}>{t('Subscribe')}</Button></>}>
         <div className="ps-stack">
-            <Field label="Name" htmlFor="subscription-name"><input id="subscription-name" className="ps-input" value={name} onChange={(event) => setName(event.target.value)} autoFocus /></Field>
-            <Field label="Subscription link" htmlFor="subscription-url" help="Paste an iCal, webcal, or .ics subscription link."><input id="subscription-url" className="ps-input" type="url" inputMode="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" /></Field>
-            <Field label="Colour" htmlFor="subscription-color"><input id="subscription-color" type="color" value={color} onChange={(event) => setColor(event.target.value)} /></Field>
+            <Field label={t('Name')} htmlFor="subscription-name"><input id="subscription-name" className="ps-input" value={name} onChange={(event) => setName(event.target.value)} autoFocus /></Field>
+            <Field label={t('Subscription link')} htmlFor="subscription-url" help={t('Paste an iCal, webcal, or .ics subscription link.')}><input id="subscription-url" className="ps-input" type="url" inputMode="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" /></Field>
+            <Field label={t('Colour')} htmlFor="subscription-color"><input id="subscription-color" type="color" value={color} onChange={(event) => setColor(event.target.value)} /></Field>
         </div>
     </Modal>;
 }
@@ -627,18 +630,18 @@ function CalendarPeople({ calendar }: { calendar: Cal }) {
     };
     return (
         <div className="ps-stack">
-            <h3 className="cloud-subhead">Shared with</h3>
+            <h3 className="cloud-subhead">{t('Shared with')}</h3>
             <PeoplePicker itemType="file" filter={plainShowSharee} onPick={(sharee: Sharee) => set(sharee.value.shareWith, 'read', sharee.value.shareType === 1)} />
-            {people === null ? <span className="ps-loader" /> : people.length === 0 ? <p className="ps-small ps-muted">Only you see this.</p> : (
+            {people === null ? <span className="ps-loader" /> : people.length === 0 ? <p className="ps-small ps-muted">{t('Only you see this.')}</p> : (
                 <ul className="ps-chain">{people.map((person) => (
                     <li key={person.id} className="ps-row">
                         <span className="ps-row__icon"><i className={`bx ${person.group ? 'bx-group' : 'bx-user'}`} /></span>
                         <span className="ps-row__body"><span className="ps-row__title">{person.name}</span></span>
                         <span className="ps-row__action cloud-row-actions">
-                            <select className="ps-select cloud-select--small" value={person.write ? 'write' : 'read'} aria-label={`What ${person.name} can do`} onChange={(event) => set(person.id, event.target.value as 'read' | 'write', person.group)}>
-                                <option value="read">Can look</option><option value="write">Can change</option>
+                            <select className="ps-select cloud-select--small" value={person.write ? 'write' : 'read'} aria-label={t('What {name} can do', { name: person.name })} onChange={(event) => set(person.id, event.target.value as 'read' | 'write', person.group)}>
+                                <option value="read">{t('Can look')}</option><option value="write">{t('Can change')}</option>
                             </select>
-                            <Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={`Stop sharing with ${person.name}`} onClick={() => set(person.id, null, person.group)} />
+                            <Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={t('Stop sharing with {name}', { name: person.name })} onClick={() => set(person.id, null, person.group)} />
                         </span>
                     </li>
                 ))}</ul>

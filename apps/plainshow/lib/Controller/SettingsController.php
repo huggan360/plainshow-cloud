@@ -117,7 +117,7 @@ class SettingsController extends Controller {
             if ($folder !== null && $this->config->getSystemValueBool('sharing.allow_custom_share_folder', true)) {
                 $folder = '/' . trim(str_replace('\\', '/', $folder), '/');
                 if (str_contains($folder, '..') || mb_strlen($folder) > 200) {
-                    throw new RuntimeException('That is not a folder name Cloud can use.');
+                    throw new RuntimeException(\PlainShow\Kit\Lang::t('That is not a folder name Cloud can use.'));
                 }
                 if ($folder === '/') {
                     $this->config->deleteUserValue($uid, 'files_sharing', 'share_folder');
@@ -214,10 +214,10 @@ class SettingsController extends Controller {
     private function makeAppPassword(string $name): array {
         $name = trim($name);
         if ($name === '' || mb_strlen($name) > 120) {
-            throw new RuntimeException('Give the device a name, up to 120 characters.');
+            throw new RuntimeException(\PlainShow\Kit\Lang::t('Give the device a name, up to 120 characters.'));
         }
         if ($this->session->exists('app_password') || !$this->config->getSystemValueBool('auth_can_create_app_token', true)) {
-            throw new RuntimeException('Make app passwords from a browser where you signed in to PlainShow.');
+            throw new RuntimeException(\PlainShow\Kit\Lang::t('Make app passwords from a browser where you signed in to PlainShow.'));
         }
         try {
             $sessionId = $this->session->getId();
@@ -229,7 +229,7 @@ class SettingsController extends Controller {
                 $password = null;
             }
         } catch (InvalidTokenException) {
-            throw new RuntimeException('Your session could not be read. Sign in again and try once more.');
+            throw new RuntimeException(\PlainShow\Kit\Lang::t('Your session could not be read. Sign in again and try once more.'));
         }
         $groups = [];
         for ($i = 0; $i < 5; $i++) {
@@ -245,15 +245,15 @@ class SettingsController extends Controller {
     public function removeDevice(int $id): JSONResponse {
         return $this->answer(function () use ($id) {
             if ($id === $this->currentTokenId()) {
-                throw new RuntimeException('That is this browser. Sign out instead.');
+                throw new RuntimeException(\PlainShow\Kit\Lang::t('That is this browser. Sign out instead.'));
             }
             try {
                 $token = $this->tokens->getTokenById($id);
             } catch (\Throwable) {
-                throw new RuntimeException('No such device.');
+                throw new RuntimeException(\PlainShow\Kit\Lang::t('No such device.'));
             }
             if ($token->getUID() !== $this->me()->getUID()) {
-                throw new RuntimeException('No such device.');
+                throw new RuntimeException(\PlainShow\Kit\Lang::t('No such device.'));
             }
             $this->tokens->invalidateTokenById($this->me()->getUID(), $id);
             return ['ok' => true];
@@ -297,12 +297,12 @@ class SettingsController extends Controller {
     #[FrontpageRoute(verb: 'PUT', url: '/api/web/settings/admin/quota')]
     public function quota(string $person, string $quota): JSONResponse {
         return $this->answer(function () use ($person, $quota) {
-            $user = $this->users->get($person) ?? throw new RuntimeException('No such person.');
+            $user = $this->users->get($person) ?? throw new RuntimeException(\PlainShow\Kit\Lang::t('No such person.'));
             $quota = trim($quota);
             if ($quota !== 'none' && $quota !== 'default') {
                 $bytes = Util::computerFileSize($quota);
                 if ($bytes === false || $bytes < 0) {
-                    throw new RuntimeException('Write the size like 5 GB or 500 MB.');
+                    throw new RuntimeException(\PlainShow\Kit\Lang::t('Write the size like 5 GB or 500 MB.'));
                 }
                 $quota = Util::humanFileSize((int)$bytes);
             }
@@ -334,7 +334,7 @@ class SettingsController extends Controller {
             }
             if ($expireDays !== null) {
                 if ($expireDays < 1 || $expireDays > 3650) {
-                    throw new RuntimeException('Pick between 1 and 3650 days.');
+                    throw new RuntimeException(\PlainShow\Kit\Lang::t('Pick between 1 and 3650 days.'));
                 }
                 $this->config->setAppValue('core', 'shareapi_expire_after_n_days', (string)$expireDays);
             }
@@ -350,7 +350,7 @@ class SettingsController extends Controller {
                     continue;
                 }
                 if (!in_array($value, self::RETENTION, true)) {
-                    throw new RuntimeException('Pick one of the choices.');
+                    throw new RuntimeException(\PlainShow\Kit\Lang::t('Pick one of the choices.'));
                 }
                 if ($value === 'auto') {
                     $this->config->deleteSystemValue($key);
