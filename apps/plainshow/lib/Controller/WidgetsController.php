@@ -57,10 +57,14 @@ class WidgetsController extends Controller {
             return $this->answer(['connected' => false]);
         }
 
+        // Optional: how many (lists load more as they scroll) and, for the calendar, which days.
+        $limit = max(1, min(200, (int)($this->request->getParam('limit') ?: 30)));
+        $days = max(1, min(62, (int)($this->request->getParam('days') ?: 31)));
+        $from = $this->request->getParam('from');
         try {
             return $this->answer(match ($widget) {
-                'calendar' => ['connected' => true, 'events' => $this->upcoming->events($account)],
-                'files' => ['connected' => true, 'files' => $this->recent->files($account)],
+                'calendar' => ['connected' => true, 'events' => $this->upcoming->events($account, $days, $limit, is_string($from) ? $from : null)],
+                'files' => ['connected' => true, 'files' => $this->recent->files($account, min(50, $limit))],
                 'photos' => $this->photos($account),
             });
         } catch (Throwable $error) {

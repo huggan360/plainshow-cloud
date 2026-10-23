@@ -19,9 +19,16 @@ class Upcoming {
     }
 
     /** @return list<array{title: string, place: string, start: string, end: string, allDay: bool, calendar: string, color: ?string}> */
-    public function events(string $account, int $days = 31, int $limit = 30): array {
+    public function events(string $account, int $days = 31, int $limit = 30, ?string $from = null): array {
         $zone = new DateTimeZone('Europe/Stockholm');
         $start = new DateTimeImmutable('today', $zone);
+        // A month view starts before today: at most two months back.
+        if ($from !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/', $from)) {
+            $chosen = new DateTimeImmutable($from, $zone);
+            if ($chosen >= $start->modify('-62 days') && $chosen <= $start->modify('+62 days')) {
+                $start = $chosen;
+            }
+        }
         $end = $start->modify("+$days days");
         $now = new DateTimeImmutable('now', $zone);
         $events = [];

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.0
+
+- Dashboard widgets: the calendar widget can ask for a range of days (`from`, `days`) for its month view, and calendar and files widgets for more rows (`limit`) as their lists are scrolled.
+
 ## v1.3.2
 
 - Background: large soft orange blobs that fade in, drift and fade out, lighting only the glyphs (kit 1.10).
