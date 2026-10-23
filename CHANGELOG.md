@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.1
+
+- New background: embers from orange to yellow that move away from the pointer, so you can chase them (kit 1.9).
+
 ## v1.3.0
 
 - English, Dutch and Swedish: the browser's language by default, or chosen in the account menu (the choice follows you to every PlainShow site).
