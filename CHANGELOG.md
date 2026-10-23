@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.1
+
+- Page headings sit in a frame of their own, so they read well on any backdrop (kit 1.11).
+
 ## v1.4.0
 
 - Dashboard widgets: the calendar widget can ask for a range of days (`from`, `days`) for its month view, and calendar and files widgets for more rows (`limit`) as their lists are scrolled.
