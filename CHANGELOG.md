@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.2
+
+- Background: large soft orange blobs that fade in, drift and fade out, lighting only the glyphs (kit 1.10).
+
 ## v1.3.1
 
 - New background: embers from orange to yellow that move away from the pointer, so you can chase them (kit 1.9).
