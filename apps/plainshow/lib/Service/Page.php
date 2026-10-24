@@ -9,6 +9,7 @@ use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IURLGenerator;
 use OCP\Util;
 use PlainShow\Kit\Lang;
+use PlainShow\Kit\Platform;
 
 /** The one page Cloud's browser app lives in, for people signed in and for share links. */
 class Page {
@@ -28,6 +29,8 @@ class Page {
                 'apiBase' => rtrim($this->urls->linkToRoute('plainshow.page.index'), '/'),
                 'webroot' => \OC::$WEBROOT,
                 'requestToken' => Util::callRegister(),
+                // Every installed PlainShow app's address (kit Platform).
+                'platform' => Platform::urls(),
             ],
             'title' => Lang::t($title),
             'meta' => $meta,

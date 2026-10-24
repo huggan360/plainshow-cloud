@@ -31,13 +31,13 @@ export function useOutside<T extends HTMLElement = HTMLDivElement>(open: boolean
 }
 
 const APPS = [
-    { id: 'core', href: 'https://plainshow.se', icon: 'bx-grid-alt', name: t('Dashboard') },
-    { id: 'blog', href: 'https://blog.plainshow.se', icon: 'bx-news', name: 'Blog' },
-    { id: 'split', href: 'https://split.plainshow.se', icon: 'bx-wallet', name: 'Split' },
-    { id: 'latex', href: 'https://latex.plainshow.se', icon: 'bx-code-curly', name: 'LaTeX' },
-    { id: 'web', href: 'https://web.plainshow.se', icon: 'bx-server', name: 'Web' },
+    { id: 'core', href: boot.platform?.core ?? '', icon: 'bx-grid-alt', name: t('Dashboard') },
+    { id: 'blog', href: boot.platform?.blog ?? '', icon: 'bx-news', name: 'Blog' },
+    { id: 'split', href: boot.platform?.split ?? '', icon: 'bx-wallet', name: 'Split' },
+    { id: 'latex', href: boot.platform?.latex ?? '', icon: 'bx-code-curly', name: 'LaTeX' },
+    { id: 'web', href: boot.platform?.web ?? '', icon: 'bx-server', name: 'Web' },
     { id: 'cloud', href: boot.base + '/', icon: 'bx-cloud', name: 'Cloud', current: true },
-].filter((app) => app.id === 'core' || boot.user.services?.includes(app.id));
+].filter((app) => app.href !== '' && (app.id === 'core' || boot.user.services?.includes(app.id)));
 
 function initials(name: string): string {
     return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
@@ -79,7 +79,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         <div className={`ps-shell${menuOpen ? ' is-menu-open' : ''}`}>
             <aside className="ps-sidebar" aria-label={t('Cloud')}>
                 <div className="ps-sidebar__brand">
-                    <a href="https://plainshow.se" className="ps-brand">
+                    <a href={boot.platform?.core} className="ps-brand">
                         <img className="ps-brand__logo" src={`${boot.assets}/ui/brand/plainshow-logo.webp?v=${boot.version}`} alt={t('PlainShow')} width="92" height="30" />
                         <span className="ps-brand__suffix">{t('Cloud')}</span>
                     </a>
@@ -118,7 +118,7 @@ export default function Shell({ children }: { children: ReactNode }) {
                         </button>
                         {accountOpen && (
                             <div className="ps-dropdown__menu ps-dropdown__menu--up">
-                                <a href="https://plainshow.se/account" className="ps-dropdown__item"><i className="bx bx-user" />{t('Account')}</a>
+                                <a href={`${boot.platform?.core}/account`} className="ps-dropdown__item"><i className="bx bx-user" />{t('Account')}</a>
                                 <Link to="/settings/devices" className="ps-dropdown__item"><i className="bx bx-mobile" />{t('Devices')}</Link>
                                 <LanguageSwitch />
                                 <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? t('Dark theme') : t('Light theme')}</button>
@@ -133,7 +133,7 @@ export default function Shell({ children }: { children: ReactNode }) {
             <div className="ps-main">
                 <header className="ps-topbar">
                     <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-menu-toggle" aria-label={t('Open menu')} onClick={() => setMenuOpen(true)}><i className="bx bx-menu" /></button>
-                    <a href="https://plainshow.se" className="ps-brand cloud-topbar-mark" aria-label={t('PlainShow')}><img className="ps-brand__mark" src={`${boot.assets}/ui/brand/plainshow-icon.webp?v=${boot.version}`} alt="" /></a>
+                    <a href={boot.platform?.core} className="ps-brand cloud-topbar-mark" aria-label={t('PlainShow')}><img className="ps-brand__mark" src={`${boot.assets}/ui/brand/plainshow-icon.webp?v=${boot.version}`} alt="" /></a>
                     <span className="ps-topbar__spacer" />
                     <div className="ps-switcher" ref={switcherRef}>
                         <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-switcher__trigger" aria-label={t('Switch service')} aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid" /></button>

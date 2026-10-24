@@ -37,7 +37,7 @@ $action = \OCP\Server::get(\OCP\IURLGenerator::class)->linkToRoute('files_sharin
 <main class="shareauth">
     <div class="shareauth__box">
         <div class="shareauth__brand">
-            <a href="https://plainshow.se" class="ps-brand"><img class="ps-brand__logo" src="<?php p($base); ?>/ui/brand/plainshow-logo.webp?v=<?php p($v); ?>" alt="PlainShow" width="92" height="30"><span class="ps-brand__suffix">Cloud</span></a>
+            <a href="<?php p(\PlainShow\Kit\Platform::url('core') ?? '/'); ?>" class="ps-brand"><img class="ps-brand__logo" src="<?php p($base); ?>/ui/brand/plainshow-logo.webp?v=<?php p($v); ?>" alt="PlainShow" width="92" height="30"><span class="ps-brand__suffix">Cloud</span></a>
         </div>
         <section class="ps-frame">
             <div class="ps-frame__panel">

@@ -44,7 +44,7 @@ export default function PublicShare() {
     return (
         <div className="cloud-public">
             <header className="cloud-public__bar">
-                <a href="https://plainshow.se" className="ps-brand">
+                <a href={boot.platform?.core} className="ps-brand">
                     <img className="ps-brand__logo" src={`${boot.assets}/ui/brand/plainshow-logo.webp?v=${boot.version}`} alt={t('PlainShow')} width="92" height="30" />
                     <span className="ps-brand__suffix">{t('Cloud')}</span>
                 </a>
@@ -64,7 +64,7 @@ export default function PublicShare() {
                 {share.note && <Frame compact className="cloud-public__note"><p><i className="bx bx-message-square-detail" /> {share.note}</p></Frame>}
                 {!share.folder ? <OneFile /> : share.canRead ? <Folder /> : <DropOnly />}
             </main>
-            <footer className="cloud-public__foot ps-small ps-muted">{t('PlainShow Cloud,')}{' '}<a href="https://plainshow.se">plainshow.se</a></footer>
+            <footer className="cloud-public__foot ps-small ps-muted">{t('PlainShow Cloud,')}{' '}<a href={boot.platform?.core}>{(boot.platform?.core ?? '').replace(/^https?:\/\//, '')}</a></footer>
             <Toasts />
         </div>
     );

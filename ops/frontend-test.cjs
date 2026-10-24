@@ -11,7 +11,11 @@ function load(relative, dependencies, globals = {}) {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
     }).outputText;
     const exports = {};
+    // The texts module is the same everywhere: English, with {placeholders} filled in.
+    const fill = (text, params = {}) => text.replace(/\{(\w+)\}/g, (match, key) => (key in params ? String(params[key]) : match));
+    const i18n = { t: fill, tn: (count, one, many, params = {}) => fill(count === 1 ? one : many, { n: count, ...params }), locale: 'en' };
     vm.runInNewContext(code, { exports, require: (name) => {
+        if (/(^|\/)i18n$/.test(name) && !(name in dependencies)) return i18n;
         if (!(name in dependencies)) throw new Error(`Unexpected import: ${name}`);
         return dependencies[name];
     }, URLSearchParams, URL, Headers, Blob, Date, crypto, ...globals }, { filename: relative });

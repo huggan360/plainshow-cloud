@@ -11,14 +11,14 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
-use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Http\Response;
-use OCP\AppFramework\Http\ContentSecurityPolicy;
+use OCP\AppFramework\Http\Attribute\NoSameSiteCookieRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\UseSession;
-use OCP\AppFramework\Http\Attribute\NoSameSiteCookieRequired;
-use OCP\AppFramework\Http\RedirectResponse;
+use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\NotFoundResponse;
+use OCP\AppFramework\Http\RedirectResponse;
+use OCP\AppFramework\Http\Response;
+use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\IRootFolder;
@@ -27,6 +27,7 @@ use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
 use OCP\Util;
+use PlainShow\Kit\Platform;
 
 /**
  * PlainShow Cloud's pages: Files, Photos, Calendar and Settings are one app
@@ -78,7 +79,7 @@ class PageController extends Controller {
                 'capabilities' => $platform['viewer']['capabilities'],
             ],
             'quota' => ['used' => $home->getSize(), 'total' => $quota === FileInfo::SPACE_UNLIMITED ? null : $quota],
-            'logout' => 'https://login.plainshow.se/logout?' . http_build_query(['return' => $this->urls->getAbsoluteURL('/')], '', '&', PHP_QUERY_RFC3986),
+            'logout' => Platform::require('login') . '/logout?' . http_build_query(['return' => $this->urls->getAbsoluteURL('/')], '', '&', PHP_QUERY_RFC3986),
         ]);
     }
 
@@ -88,14 +89,14 @@ class PageController extends Controller {
     #[NoSameSiteCookieRequired]
     #[FrontpageRoute(verb: 'GET', url: '/auth/frontchannel')]
     public function frontchannel(): Response {
-        if (rtrim((string)$this->request->getParam('iss', ''), '/') === 'https://login.plainshow.se') {
+        if (rtrim((string)$this->request->getParam('iss', ''), '/') === Platform::url('login')) {
             $this->session->logout();
         }
         $response = new Response();
         $response->addHeader('Content-Type', 'text/plain; charset=utf-8');
         $response->addHeader('Cache-Control', 'no-store');
         $policy = new ContentSecurityPolicy();
-        $policy->addAllowedFrameAncestorDomain('https://login.plainshow.se');
+        $policy->addAllowedFrameAncestorDomain(Platform::require('login'));
         $response->setContentSecurityPolicy($policy);
         return $response;
     }

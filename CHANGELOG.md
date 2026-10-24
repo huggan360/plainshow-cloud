@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.5.0
+
+- Every address comes from the platform file (kit 1.12), so Cloud runs on any domain: the app menu, the sign-out, links to the dashboard and its API.
+- The front-end tests know the texts module again.
+
 ## v1.4.2
 
 - Page headings are a real frame with its inner panel; the main page's heading has the orange ring around the panel, as on widgets (kit 1.11.1).

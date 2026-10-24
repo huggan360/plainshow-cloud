@@ -9,6 +9,8 @@ export type Boot = {
     user: { id: string; name: string; email: string | null; admin: boolean; avatar: string; services: string[]; capabilities: string[] };
     quota: { used: number; total: number | null };
     logout: string;
+    /** Every installed PlainShow app's address, by app id (core, login, blog, ...). */
+    platform: Record<string, string>;
     /** On a share link's page: the link. */
     public?: {
         token: string; name: string; owner: string; folder: boolean;

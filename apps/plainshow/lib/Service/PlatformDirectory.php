@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\PlainShow\Service;
 
+use PlainShow\Kit\Platform;
 use RuntimeException;
 
 /** Active PlainShow accounts and groups that the current Cloud user may share with. */
@@ -12,13 +13,16 @@ class PlatformDirectory {
     }
 
     public function forAccount(string $account): array {
-        $url = 'https://plainshow.se/api/core/v1/directory/for-cloud-account?' . http_build_query($this->signing->directoryQuery($account));
+        // Core runs on this server: the request goes straight to it.
+        $core = Platform::require('core');
+        $host = (string) parse_url($core, PHP_URL_HOST);
+        $url = $core . '/api/core/v1/directory/for-cloud-account?' . http_build_query($this->signing->directoryQuery($account));
         $connection = curl_init($url);
         curl_setopt_array($connection, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 2,
             CURLOPT_TIMEOUT => 5,
-            CURLOPT_RESOLVE => ['plainshow.se:443:127.0.0.1'],
+            CURLOPT_RESOLVE => ["$host:443:127.0.0.1"],
         ]);
         $body = curl_exec($connection);
         $status = curl_getinfo($connection, CURLINFO_HTTP_CODE);

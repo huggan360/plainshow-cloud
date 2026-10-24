@@ -7,6 +7,7 @@ namespace OCA\PlainShow\Controller;
 use OCA\PlainShow\Service\Recent;
 use OCA\PlainShow\Service\Signing;
 use OCA\PlainShow\Service\Upcoming;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
@@ -15,7 +16,6 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\StreamResponse;
-use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
@@ -25,6 +25,7 @@ use OCP\IRequest;
 use OCP\IUserManager;
 use PlainShow\Kit\KitException;
 use PlainShow\Kit\OpenApi;
+use PlainShow\Kit\Platform;
 use PlainShow\Kit\Signed;
 
 /**
@@ -76,7 +77,7 @@ class ApiController extends Controller {
             'GET /files/download' => ['summary' => 'A file', 'description' => 'The file itself.', 'query' => ['path' => 'The file, such as Documents/plan.pdf']],
             'GET /photos' => ['summary' => 'Your latest photos and videos', 'query' => ['limit' => 'How many, up to 100 (default 30)']],
             'GET /events' => ['summary' => 'What is coming up', 'description' => 'Events in your calendars from today, repeats included.', 'query' => ['days' => 'How far ahead, up to 90 (default 14)']],
-        ], ['title' => 'PlainShow Cloud', 'version' => $this->apps->getAppVersion('plainshow'), 'description' => 'Read your files, photos and calendar.'], 'https://plainshow.se/api/cloud/v1');
+        ], ['title' => 'PlainShow Cloud', 'version' => $this->apps->getAppVersion('plainshow'), 'description' => 'Read your files, photos and calendar.'], Platform::require('core') . '/api/cloud/v1');
         $response = new JSONResponse($spec);
         $response->cacheFor(300);
         return $response;
@@ -169,7 +170,7 @@ class ApiController extends Controller {
     /** @return array{0: ?string, 1: ?JSONResponse} the account to act as, or the answer to give */
     private function account(?string $capability = 'cloud.files.view'): array {
         if (!Signed::present($_SERVER)) {
-            return [null, $this->send(['ok' => false, 'message' => 'Use https://plainshow.se/api/cloud/v1 with a PlainShow API token.'], Http::STATUS_UNAUTHORIZED)];
+            return [null, $this->send(['ok' => false, 'message' => 'Use ' . Platform::require('core') . '/api/cloud/v1 with a PlainShow API token.'], Http::STATUS_UNAUTHORIZED)];
         }
         try {
             $verified = Signed::verify($_SERVER, (string)file_get_contents('php://input'), $this->signing->secret());
