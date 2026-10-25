@@ -16,12 +16,13 @@ use OCP\IUserManager;
 use OCP\Share\IManager as ShareManager;
 use OCP\Share\IShare;
 use RuntimeException;
+use Sabre\CalDAV\Xml\Property\SupportedCalendarComponentSet;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Reader;
 
 /**
  * What the dashboard's assistant may do in someone's Cloud, as that person:
- * add, change and remove calendar events, add tasks, find files and share a
+ * make a calendar or task list, add, change and remove calendar events, add tasks, find files and share a
  * file with someone. Every call names the account it acts for; Core has
  * checked who asked and what they may do.
  */
@@ -55,6 +56,34 @@ class Actions {
             ];
         }
         return $list;
+    }
+
+    /** The colours the Calendar offers for a new calendar (src/calendar/Calendar.tsx). */
+    private const COLORS = ['#FC5000', '#E5534B', '#F5B301', '#2EA043', '#14B8A6', '#3B82F6', '#8E7CF0', '#DB2777', '#8A8A8A'];
+
+    /** A new calendar (or task list), as the Calendar makes one; a name already used gives the one there. */
+    public function createCalendar(string $account, string $name, string $color, string $kind): array {
+        $name = trim(mb_substr($name, 0, 100));
+        if ($name === '') {
+            throw new RuntimeException('A calendar needs a name.');
+        }
+        $kind = $kind === 'tasks' ? 'tasks' : 'events';
+        foreach ($this->calendars($account) as $calendar) {
+            if ($calendar[$kind] && mb_strtolower($calendar['name']) === mb_strtolower($name)) {
+                return $calendar + ['already' => true, 'url' => $this->urls->getAbsoluteURL('/apps/plainshow/calendar')];
+            }
+        }
+        $color = in_array(strtoupper($color), self::COLORS, true) ? strtoupper($color) : self::COLORS[random_int(0, count(self::COLORS) - 1)];
+        $slug = trim((string)preg_replace('/[^a-z0-9]+/', '-', strtolower((string)iconv('UTF-8', 'ASCII//TRANSLIT', $name))), '-') ?: 'calendar';
+        $id = $this->calDav->createCalendar('principals/users/' . $account, $slug . '-' . substr(bin2hex(random_bytes(4)), 0, 5), [
+            '{DAV:}displayname' => $name,
+            '{http://apple.com/ns/ical/}calendar-color' => $color,
+            '{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet([$kind === 'tasks' ? 'VTODO' : 'VEVENT']),
+        ]);
+        return [
+            'id' => (int)$id, 'name' => $name, 'color' => $color, 'events' => $kind === 'events', 'tasks' => $kind === 'tasks', 'already' => false,
+            'url' => $this->urls->getAbsoluteURL('/apps/plainshow/calendar'),
+        ];
     }
 
     /** A new event; times are local (Swedish) times, or dates for a whole day. */

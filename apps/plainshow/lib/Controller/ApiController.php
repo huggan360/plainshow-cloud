@@ -47,6 +47,7 @@ class ApiController extends Controller {
         ['method' => 'GET', 'path' => '/photos', 'capability' => 'cloud.photos.view'],
         ['method' => 'GET', 'path' => '/events', 'capability' => 'cloud.calendar.view'],
         ['method' => 'GET', 'path' => '/calendars', 'capability' => 'cloud.calendar.view'],
+        ['method' => 'POST', 'path' => '/calendars', 'capability' => 'cloud.calendar.edit'],
         ['method' => 'POST', 'path' => '/events', 'capability' => 'cloud.calendar.edit'],
         ['method' => 'POST', 'path' => '/events/change', 'capability' => 'cloud.calendar.edit'],
         ['method' => 'POST', 'path' => '/events/remove', 'capability' => 'cloud.calendar.edit'],
@@ -87,7 +88,7 @@ class ApiController extends Controller {
             'GET /files/recent' => ['summary' => 'Recently changed files', 'query' => ['limit' => 'How many, up to 50 (default 20)']],
             'GET /files/download' => ['summary' => 'A file', 'description' => 'The file itself.', 'query' => ['path' => 'The file, such as Documents/plan.pdf']],
             'GET /photos' => ['summary' => 'Your latest photos and videos', 'query' => ['limit' => 'How many, up to 100 (default 30)']],
-            'GET /events' => ['summary' => 'What is coming up', 'description' => 'Events in your calendars from today, repeats included.', 'query' => ['days' => 'How far ahead, up to 90 (default 14)']],
+            'GET /events' => ['summary' => 'What is coming up', 'description' => 'Events in your calendars from today, repeats included.', 'query' => ['days' => 'How far ahead, up to 90 (default 14)', 'from' => 'The first day (YYYY-MM-DD, up to two months away; default today)']],
         ], ['title' => 'PlainShow Cloud', 'version' => $this->apps->getAppVersion('plainshow'), 'description' => 'Read your files, photos and calendar.'], Platform::require('core') . '/api/cloud/v1');
         $response = new JSONResponse($spec);
         $response->cacheFor(300);
@@ -170,12 +171,12 @@ class ApiController extends Controller {
     #[PublicPage]
     #[NoCSRFRequired]
     #[FrontpageRoute(verb: 'GET', url: '/api/v1/events')]
-    public function events(int $days = 14): JSONResponse {
+    public function events(int $days = 14, string $from = ''): JSONResponse {
         [$account, $error] = $this->account('cloud.calendar.view');
         if ($error) {
             return $error;
         }
-        return $this->send(['ok' => true, 'events' => $this->upcoming->events($account, max(1, min(90, $days)), 200)]);
+        return $this->send(['ok' => true, 'events' => $this->upcoming->events($account, max(1, min(90, $days)), 200, $from !== '' ? $from : null)]);
     }
 
     #[PublicPage]
@@ -184,6 +185,15 @@ class ApiController extends Controller {
     public function calendars(): JSONResponse {
         [$account, $error] = $this->account('cloud.calendar.view');
         return $error ?? $this->send(['ok' => true, 'calendars' => $this->actions->calendars($account)]);
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'POST', url: '/api/v1/calendars')]
+    public function createCalendar(): JSONResponse {
+        return $this->act('cloud.calendar.edit', fn (string $account, array $body) => ['calendar' => $this->actions->createCalendar(
+            $account, (string)($body['name'] ?? ''), (string)($body['color'] ?? ''), (string)($body['kind'] ?? 'events'),
+        )]);
     }
 
     #[PublicPage]

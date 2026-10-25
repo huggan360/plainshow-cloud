@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.8.0
+
+- For the Assistant: the API can make a new calendar or task list (as the Calendar does, in one of its colours; a name you already have gives that one), and the events list can start on another day than today.
+
 ## v1.7.0
 
 - For the dashboard's Composer: the API can list your calendars, add, change and remove events, add tasks, find files by kind and name, and share a file with someone, each as you and only with the matching permission.
