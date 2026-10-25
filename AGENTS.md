@@ -14,7 +14,7 @@ and desktop app endpoints).
   - `lib/Controller`: the page (`PageController`, every pretty address), web
     API under `/api/web/...` (photos, albums, settings, devices, calendar,
     directory), the signed API v1 for core (`ApiController`, widgets, thumbs).
-    API v1 reads for scripts, and writes for core's Composer only through
+    API v1 reads for scripts, and writes for core's Assistant only through
     `Service/Actions.php` (events and tasks over CalDAV, file search, user
     shares), each behind its capability (`cloud.calendar.edit`, `cloud.files.share`).
   - `lib/Share/PublicPage.php`: share links; `templates/shareauth.php`: their
