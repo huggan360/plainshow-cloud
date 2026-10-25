@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\PlainShow\Controller;
 
+use OCA\PlainShow\Service\Actions;
 use OCA\PlainShow\Service\Recent;
 use OCA\PlainShow\Service\Signing;
 use OCA\PlainShow\Service\Upcoming;
@@ -27,10 +28,12 @@ use PlainShow\Kit\KitException;
 use PlainShow\Kit\OpenApi;
 use PlainShow\Kit\Platform;
 use PlainShow\Kit\Signed;
+use Throwable;
 
 /**
  * Cloud API, version 1: plainshow.se/api/cloud/v1/... Reads your files,
- * photos and calendar for scripts using a personal PlainShow token. Calls
+ * photos and calendar for scripts using a personal PlainShow token, and lets
+ * the dashboard's assistant add events and tasks and share files. Calls
  * arrive through Core's gateway, signed for the person and naming their Cloud
  * account (ps_cloud_uid); /health and /openapi.json are public.
  */
@@ -43,6 +46,13 @@ class ApiController extends Controller {
         ['method' => 'GET', 'path' => '/files/download', 'capability' => 'cloud.files.view'],
         ['method' => 'GET', 'path' => '/photos', 'capability' => 'cloud.photos.view'],
         ['method' => 'GET', 'path' => '/events', 'capability' => 'cloud.calendar.view'],
+        ['method' => 'GET', 'path' => '/calendars', 'capability' => 'cloud.calendar.view'],
+        ['method' => 'POST', 'path' => '/events', 'capability' => 'cloud.calendar.edit'],
+        ['method' => 'POST', 'path' => '/events/change', 'capability' => 'cloud.calendar.edit'],
+        ['method' => 'POST', 'path' => '/events/remove', 'capability' => 'cloud.calendar.edit'],
+        ['method' => 'POST', 'path' => '/tasks', 'capability' => 'cloud.calendar.edit'],
+        ['method' => 'GET', 'path' => '/files/find', 'capability' => 'cloud.files.view'],
+        ['method' => 'POST', 'path' => '/shares', 'capability' => 'cloud.files.share'],
     ];
 
     public function __construct(
@@ -54,6 +64,7 @@ class ApiController extends Controller {
         private Recent $recent,
         private Upcoming $upcoming,
         private IAppManager $apps,
+        private Actions $actions,
     ) {
         parent::__construct($appName, $request);
     }
@@ -167,8 +178,82 @@ class ApiController extends Controller {
         return $this->send(['ok' => true, 'events' => $this->upcoming->events($account, max(1, min(90, $days)), 200)]);
     }
 
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'GET', url: '/api/v1/calendars')]
+    public function calendars(): JSONResponse {
+        [$account, $error] = $this->account('cloud.calendar.view');
+        return $error ?? $this->send(['ok' => true, 'calendars' => $this->actions->calendars($account)]);
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'POST', url: '/api/v1/events')]
+    public function addEvent(): JSONResponse {
+        return $this->act('cloud.calendar.edit', fn (string $account, array $body) => ['event' => $this->actions->addEvent(
+            $account, (int)($body['calendar'] ?? 0), (string)($body['title'] ?? ''), (string)($body['start'] ?? ''), (string)($body['end'] ?? ''), (bool)($body['allDay'] ?? false), (string)($body['place'] ?? ''),
+        )]);
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'POST', url: '/api/v1/events/change')]
+    public function changeEvent(): JSONResponse {
+        return $this->act('cloud.calendar.edit', fn (string $account, array $body) => ['event' => $this->actions->changeEvent(
+            $account, (int)($body['calendar'] ?? 0), (string)($body['uid'] ?? ''), array_intersect_key($body, array_flip(['title', 'start', 'end', 'allDay', 'place'])),
+        )]);
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'POST', url: '/api/v1/events/remove')]
+    public function removeEvent(): JSONResponse {
+        return $this->act('cloud.calendar.edit', function (string $account, array $body) {
+            $this->actions->removeEvent($account, (int)($body['calendar'] ?? 0), (string)($body['uid'] ?? ''));
+            return [];
+        });
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'POST', url: '/api/v1/tasks')]
+    public function addTask(): JSONResponse {
+        return $this->act('cloud.calendar.edit', fn (string $account, array $body) => ['task' => $this->actions->addTask(
+            $account, (int)($body['calendar'] ?? 0), (string)($body['title'] ?? ''), isset($body['due']) ? (string)$body['due'] : null,
+        )]);
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'GET', url: '/api/v1/files/find')]
+    public function findFiles(string $kind = 'any', string $q = '', int $limit = 5): JSONResponse {
+        [$account, $error] = $this->account('cloud.files.view');
+        return $error ?? $this->send(['ok' => true, 'files' => $this->actions->files($account, $kind, mb_substr($q, 0, 100), max(1, min(20, $limit)))]);
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[FrontpageRoute(verb: 'POST', url: '/api/v1/shares')]
+    public function share(): JSONResponse {
+        return $this->act('cloud.files.share', fn (string $account, array $body) => ['share' => $this->actions->share($account, (int)($body['file'] ?? 0), (string)($body['with'] ?? ''))]);
+    }
+
+    /** A call that changes something: checked like every call, then done with the JSON body. */
+    private function act(string $capability, callable $action): JSONResponse {
+        [$account, $error] = $this->account($capability, true);
+        if ($error) {
+            return $error;
+        }
+        $body = json_decode((string)file_get_contents('php://input'), true);
+        try {
+            return $this->send(['ok' => true] + $action($account, is_array($body) ? $body : []));
+        } catch (Throwable $failure) {
+            return $this->send(['ok' => false, 'message' => $failure->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
+        }
+    }
+
     /** @return array{0: ?string, 1: ?JSONResponse} the account to act as, or the answer to give */
-    private function account(?string $capability = 'cloud.files.view'): array {
+    private function account(?string $capability = 'cloud.files.view', bool $write = false): array {
         if (!Signed::present($_SERVER)) {
             return [null, $this->send(['ok' => false, 'message' => 'Use ' . Platform::require('core') . '/api/cloud/v1 with a PlainShow API token.'], Http::STATUS_UNAUTHORIZED)];
         }
@@ -185,8 +270,8 @@ class ApiController extends Controller {
         if ($account === '' || !$this->users->userExists($account)) {
             return [null, $this->send(['ok' => false, 'message' => 'You have no Cloud account yet.'], Http::STATUS_NOT_FOUND)];
         }
-        if ($this->request->getMethod() !== 'GET') {
-            return [null, $this->send(['ok' => false, 'message' => 'The Cloud API only reads.'], Http::STATUS_METHOD_NOT_ALLOWED)];
+        if ($this->request->getMethod() !== ($write ? 'POST' : 'GET')) {
+            return [null, $this->send(['ok' => false, 'message' => $write ? 'Use POST.' : 'This part of the Cloud API only reads.'], Http::STATUS_METHOD_NOT_ALLOWED)];
         }
         return [$account, null];
     }

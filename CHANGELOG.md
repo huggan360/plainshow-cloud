@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.7.0
+
+- For the dashboard's Composer: the API can list your calendars, add, change and remove events, add tasks, find files by kind and name, and share a file with someone, each as you and only with the matching permission.
+
 ## v1.6.1
 
 - The backdrop's light is as gentle in every theme colour as in orange (kit 1.13.1).
