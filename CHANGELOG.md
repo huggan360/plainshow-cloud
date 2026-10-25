@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.0
+
+- Cloud follows the theme colour chosen in the dashboard (kit 1.13), with Bree Serif titles and dark grey text in the light theme.
+
 ## v1.5.0
 
 - Every address comes from the platform file (kit 1.12), so Cloud runs on any domain: the app menu, the sign-out, links to the dashboard and its API.

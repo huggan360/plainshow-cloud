@@ -12,7 +12,7 @@ $share = $_['share'];
 $owner = \OCP\Server::get(\OCP\IUserManager::class)->get($share->getShareOwner());
 $action = \OCP\Server::get(\OCP\IURLGenerator::class)->linkToRoute('files_sharing.Share.authenticate', ['token' => $share->getToken(), 'redirect' => 'preview']);
 ?><!doctype html>
-<html lang="<?php p(\PlainShow\Kit\Lang::current()); ?>" data-theme="dark">
+<html lang="<?php p(\PlainShow\Kit\Lang::current()); ?>" data-theme="dark"<?php print_unescaped(\PlainShow\Kit\Theme::attributes()); ?>>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
